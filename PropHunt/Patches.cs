@@ -86,17 +86,15 @@ namespace PropHunt
                     task.Complete = true;
                 }
                 GameData.Instance.RecomputeTaskCounts();
+                __instance.Revive();
                 __instance.Data.Role.TeamType = RoleTeamTypes.Impostor;
                 DestroyableSingleton<RoleManager>.Instance.SetRole(__instance, RoleTypes.Impostor);
-                __instance.Data.IsDead = false;
-                __instance.gameObject.layer = LayerMask.NameToLayer("Players");
                 __instance.transform.localScale = new Vector3(0.7f, 0.7f, 1);
                 __instance.Visible = true;
                 foreach (SpriteRenderer rend in __instance.GetComponentsInChildren<SpriteRenderer>())
                 {
                     rend.sortingOrder += 5;
                 }
-                __instance.Revive();
             }
         }
 
