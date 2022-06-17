@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace PropHunt
 {
-    [BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "1.0.0")]
+    [BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2022.6.17")]
     [BepInProcess("Among Us.exe")]
     [BepInDependency(ReactorPlugin.Id)]
     public partial class PropHuntPlugin : BasePlugin
@@ -37,10 +37,6 @@ namespace PropHunt
             HidingTime = Config.Bind("Prop Hunt", "Hiding Time", 30f);
             MaxMissedKills = Config.Bind("Prop Hunt", "Max Misses", 3);
             Infection = Config.Bind("Prop Hunt", "Infection", true);
-
-            CustomStringName.Register("HidingTime");
-            CustomStringName.Register("MaxMissedKills");
-            CustomStringName.Register("Infection");
 
             Instance = PluginSingleton<PropHuntPlugin>.Instance;
 
@@ -116,6 +112,14 @@ namespace PropHunt
                     HudManager.Instance.FullScreen.gameObject.SetActive(false);
                 }
                 yield break;
+            }
+
+            public static System.Collections.IEnumerator IntroCutsceneHidePatch(IntroCutscene __instance)
+            {
+                PlayerControl.LocalPlayer.moveable = false;
+                yield return new WaitForSeconds(PropHuntPlugin.hidingTime);
+                PlayerControl.LocalPlayer.moveable = true;
+                Object.Destroy(__instance.gameObject);
             }
         }
     }

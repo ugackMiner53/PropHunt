@@ -76,8 +76,8 @@ namespace PropHunt
 
         // Make prop impostor on death
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.Die))]
-        [HarmonyPrefix]
-        public static bool MakePropImpostorPatch(PlayerControl __instance)
+        [HarmonyPostfix]
+        public static void MakePropImpostorPatch(PlayerControl __instance)
         {
             if (!__instance.Data.Role.IsImpostor && PropHuntPlugin.infection)
             {
@@ -96,10 +96,8 @@ namespace PropHunt
                 {
                     rend.sortingOrder += 5;
                 }
-                return false;
+                __instance.Revive();
             }
-            return true;
-
         }
 
         // Make it so that seekers only win if they got ALL the props
@@ -136,7 +134,7 @@ namespace PropHunt
                     }
                 }
             }
-            if (crew <= 0) // aliveImpostors
+            if (crew <= 0)
             {
                 if (DestroyableSingleton<TutorialManager>.InstanceExists)
                 {
@@ -327,25 +325,19 @@ namespace PropHunt
             }
         }
 
+        // Extend the intro cutscene for impostors
         [HarmonyPatch(typeof(IntroCutscene._CoBegin_d__19), nameof(IntroCutscene._CoBegin_d__19.MoveNext))]
         [HarmonyPrefix]
         public static bool IntroCutsceneCoBeginPatch(IntroCutscene._CoBegin_d__19 __instance)
         {
-            Logger<PropHuntPlugin>.Info("Postfix of " + __instance.__1__state);
             if (__instance.__1__state != 2 || !PlayerControl.LocalPlayer.Data.Role.IsImpostor)
             {
                 return true;
             }
-            Coroutines.Start(IntroCutsceneHidePatch(__instance.__4__this));
+            Coroutines.Start(PropHuntPlugin.Utility.IntroCutsceneHidePatch(__instance.__4__this));
             return false;
         }
 
-        public static System.Collections.IEnumerator IntroCutsceneHidePatch(IntroCutscene __instance)
-        {
-            PlayerControl.LocalPlayer.moveable = false;
-            yield return new WaitForSeconds(PropHuntPlugin.hidingTime);
-            PlayerControl.LocalPlayer.moveable = true;
-            Object.Destroy(__instance.gameObject);
-        }
+
     }
 }
