@@ -142,7 +142,6 @@ namespace PropHunt
                 }
                 if (PlayerControl.GameOptions.gameType == GameType.Normal)
                 {
-                    __instance.BeginCalled = false;
                     GameOverReason endReason;
                     switch (TempData.LastDeathReason)
                     {
