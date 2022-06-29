@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace PropHunt
 {
-    [BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2022.6.17")]
+    [BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2022.6.29")]
     [BepInProcess("Among Us.exe")]
     [BepInDependency(ReactorPlugin.Id)]
     public partial class PropHuntPlugin : BasePlugin
