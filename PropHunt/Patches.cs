@@ -1,8 +1,10 @@
-﻿// Patches for PropHuntPlugin
+// Patches for PropHuntPlugin
 // Copyright (C) 2022  ugackMiner
 using HarmonyLib;
 using Reactor;
 using UnityEngine;
+using AmongUs.Data;
+using Reactor.Utilities;
 
 namespace PropHunt
 {
@@ -136,7 +138,7 @@ namespace PropHunt
             {
                 if (DestroyableSingleton<TutorialManager>.InstanceExists)
                 {
-                    DestroyableSingleton<HudManager>.Instance.ShowPopUp(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.GameOverImpostorKills, (UnhollowerBaseLib.Il2CppReferenceArray<Il2CppSystem.Object>)System.Array.Empty<object>()));
+                    DestroyableSingleton<HudManager>.Instance.ShowPopUp(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.GameOverImpostorKills, System.Array.Empty<Il2CppSystem.Object>()));
                     ShipStatus.ReviveEveryone();
                     return false;
                 }
@@ -155,7 +157,7 @@ namespace PropHunt
                             endReason = GameOverReason.ImpostorByVote;
                             break;
                     }
-                    ShipStatus.RpcEndGame(endReason, !SaveManager.BoughtNoAds);
+                    ShipStatus.RpcEndGame(endReason, !DataManager.Player.Ads.HasPurchasedAdRemoval);
                     return false;
                 }
             }
@@ -164,7 +166,7 @@ namespace PropHunt
                 if (PlayerControl.GameOptions.gameType == GameType.Normal && GameData.Instance.TotalTasks <= GameData.Instance.CompletedTasks)
                 {
                     __instance.enabled = false;
-                    ShipStatus.RpcEndGame(GameOverReason.HumansByTask, !SaveManager.BoughtNoAds);
+                    ShipStatus.RpcEndGame(GameOverReason.HumansByTask, !DataManager.Player.Ads.HasPurchasedAdRemoval);
                     return false;
                 }
             }
@@ -180,14 +182,14 @@ namespace PropHunt
                 }
                 if (allComplete)
                 {
-                    DestroyableSingleton<HudManager>.Instance.ShowPopUp(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.GameOverTaskWin, (UnhollowerBaseLib.Il2CppReferenceArray<Il2CppSystem.Object>)System.Array.Empty<object>()));
+                    DestroyableSingleton<HudManager>.Instance.ShowPopUp(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.GameOverTaskWin, System.Array.Empty<Il2CppSystem.Object>()));
                     __instance.Begin();
                 }
 
             }
             if (aliveImpostors <= 0)
             {
-                ShipStatus.RpcEndGame(GameOverReason.HumansByVote, !SaveManager.BoughtNoAds);
+                ShipStatus.RpcEndGame(GameOverReason.HumansByVote, !DataManager.Player.Ads.HasPurchasedAdRemoval);
                 return false;
             }
             return false;
