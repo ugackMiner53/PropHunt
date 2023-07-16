@@ -1,4 +1,4 @@
-﻿### Note : __Note: This repository is an unofficial continuation of PropHunt due to the original repository being discontinued__.
+﻿### __Note : This repository is an unofficial continuation of PropHunt due to the original repository being discontinued__.
 
 [![Made With Reactor](./Images/madewithreactor.png)](https://github.com/NuclearPowered/Reactor)
 
