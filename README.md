@@ -1,11 +1,13 @@
-﻿[![Made With Reactor](./Images/madewithreactor.png)](https://github.com/NuclearPowered/Reactor)
+﻿### Note : __Note: This repository is an unofficial continuation of PropHunt due to the original repository being discontinued__.
+
+[![Made With Reactor](./Images/madewithreactor.png)](https://github.com/NuclearPowered/Reactor)
 
 ![Prop Hunt Logo](./Images/prophuntlogo.png)
 
-```Compatible with 2022.10.25s ```
+```Compatible with Among Us 2023.7.12s ```
 # Prop Hunt
 
-A mod for [Among Us](https://store.steampowered.com/app/945360/Among_Us/) which adds a completely new gamemode, Prop Hunt!
+A mod for [Among Us](https://store.steampowered.com/app/945360/Among_Us/) which adds a completely new gamemode, Prop Hunt Reactivited!
 
 
 ## How To Play
@@ -31,14 +33,18 @@ Prop Hunt replaces the default roles in the game with two new roles, the **Seeke
 | Infection Mode | Whether Props become Seekers when they are killed | True |
 
 ## Installation
-Download the zip from the [latest release](https://github.com/ugackMiner53/PropHunt/releases), and extract the contents into your Among Us game folder.
+Download the zip from the [latest release](https://github.com/JeanAU/PropHunt-Reactivited/releases), and extract the contents into your Among Us game folder.
 
-Although the mod *may* work on official servers, it is highly discouraged to do so, and will likely get you banned. Instead, try to setup your own modded server using [Impostor](https://github.com/Impostor/Impostor), [Hindenburg](https://github.com/SkeldJS/Hindenburg) or another Reactor compatible server.
+Although the mod *may* work on official servers, it is highly discouraged to do so, and will likely get you banned. Instead, try to add [MiniRegionInstall](https://github.com/miniduikboot/Mini.RegionInstall) you can see in their github repo.
 
 ## Compatability
-Prop Hunt is fully compatible with [Submerged](https://github.com/SubmergedAmongUs/Submerged)!
+Prop Hunt is fully compatible with [Submerged] (https://github.com/SubmergedAmongUs/Submerged)!
+
 
 However, Prop Hunt will **not** work with many other mods, such as role mods and any other mod which modifies the gameplay loop.
 
 ## Contributing
-Contributions are welcome! Submit a [pull request](https://github.com/ugackMiner53/PropHunt/pulls) and give a brief description and the code will be reviewed as soon as possible.
+Contributions are welcome! Submit a [pull request](https://github.com/JeanAU/PropHunt-Reactivited/pulls) and give a brief description and the code will be reviewed as soon as possible.
+
+## Issues ?
+If you have any bugs or any need to contact me, join the Discord Server or create a ticket on GitHub.

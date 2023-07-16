@@ -13,13 +13,16 @@ using UnityEngine;
 namespace PropHunt;
 
 
-[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2022.11.5")]
+[BepInPlugin("com.jeanau.prophunt-r", "Prop Hunt-Reactivited", VersionString)]
 [BepInProcess("Among Us.exe")]
 [BepInDependency(ReactorPlugin.Id)]
 public partial class PropHuntPlugin : BasePlugin
 {
+    public const string VersionString = "2023.7.16";
+
     // Backend Variables
-    public Harmony Harmony { get; } = new("com.ugackminer.amongus.prophunt");
+    public Harmony Harmony { get; } = new("com.jeanau.prophunt-r");
+
     public ConfigEntry<float> HidingTime { get; private set; }
     public ConfigEntry<int> MaxMissedKills { get; private set; }
     public ConfigEntry<bool> Infection { get; private set; }
@@ -109,10 +112,10 @@ public partial class PropHuntPlugin : BasePlugin
             if (Constants.ShouldPlaySfx())
             {
                 SoundManager.Instance.PlaySound(ShipStatus.Instance.SabotageSound, false, 0.8f);
-                HudManager.Instance.FullScreen.color = new Color(1f, 0f, 0f, 0.372549027f);
-                HudManager.Instance.FullScreen.gameObject.SetActive(true);
+                DestroyableSingleton<HudManager>.Instance.FullScreen.color = new Color(1f, 0f, 0f, 0.372549027f);
+                DestroyableSingleton<HudManager>.Instance.FullScreen.gameObject.SetActive(true);
                 yield return new WaitForSeconds(0.5f);
-                HudManager.Instance.FullScreen.gameObject.SetActive(false);
+               DestroyableSingleton<HudManager>.Instance.FullScreen.gameObject.SetActive(false);
             }
             yield break;
         }

@@ -1,10 +1,12 @@
 // Patches for PropHuntPlugin
-// Copyright (C) 2022  ugackMiner
+// Copyright (C) 2023  ugackMiner
 using HarmonyLib;
-using Reactor;
+using Reactor.Utilities.Extensions;
 using UnityEngine;
 using AmongUs.Data;
 using Reactor.Utilities;
+using AmongUs.GameOptions;
+using TMPro;
 
 namespace PropHunt
 {
@@ -51,7 +53,7 @@ namespace PropHunt
         {
             __instance.gameObject.AddComponent<SpriteRenderer>();
             __instance.GetComponent<CircleCollider2D>().radius = 0.00001f;
-            if (AmongUsClient.Instance.GameMode != GameModes.FreePlay)
+            if (AmongUsClient.Instance.NetworkMode != NetworkModes.FreePlay)
             {
                 GameObject.FindObjectOfType<PingTracker>().enabled = false;
             }
@@ -59,7 +61,7 @@ namespace PropHunt
 
 
         // Runs periodically, resets animation data for players
-        [HarmonyPatch(typeof(PlayerPhysics), "HandleAnimation")]
+        [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.HandleAnimation))]
         [HarmonyPostfix]
         public static void PlayerPhysicsAnimationPatch(PlayerPhysics __instance)
         {
@@ -101,9 +103,9 @@ namespace PropHunt
         }
 
         // Make it so that seekers only win if they got ALL the props
-        [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.CheckEndCriteria))]
+        [HarmonyPatch(typeof(LogicGameFlowNormal), nameof(LogicGameFlowNormal.CheckEndCriteria))]
         [HarmonyPrefix]
-        public static bool CheckEndPatch(ShipStatus __instance)
+        public static bool CheckEndPatch(LogicGameFlowNormal __instance)
         {
             if (!GameData.Instance || TutorialManager.InstanceExists)
             {
@@ -139,10 +141,10 @@ namespace PropHunt
                 if (DestroyableSingleton<TutorialManager>.InstanceExists)
                 {
                     DestroyableSingleton<HudManager>.Instance.ShowPopUp(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.GameOverImpostorKills, System.Array.Empty<Il2CppSystem.Object>()));
-                    ShipStatus.ReviveEveryone();
+                    GameManager.Instance.ReviveEveryoneFreeplay();
                     return false;
                 }
-                if (PlayerControl.GameOptions.gameType == GameType.Normal)
+                if (GameOptionsManager.Instance.CurrentGameOptions.GameMode == GameModes.Normal)
                 {
                     GameOverReason endReason;
                     switch (TempData.LastDeathReason)
@@ -157,16 +159,16 @@ namespace PropHunt
                             endReason = GameOverReason.ImpostorByVote;
                             break;
                     }
-                    ShipStatus.RpcEndGame(endReason, !DataManager.Player.Ads.HasPurchasedAdRemoval);
+                    GameManager.Instance.RpcEndGame(endReason, !DataManager.Player.Ads.HasPurchasedAdRemoval);
                     return false;
                 }
             }
             else if (!DestroyableSingleton<TutorialManager>.InstanceExists)
             {
-                if (PlayerControl.GameOptions.gameType == GameType.Normal && GameData.Instance.TotalTasks <= GameData.Instance.CompletedTasks)
+                if (GameOptionsManager.Instance.currentNormalGameOptions.GameMode == GameModes.Normal && GameData.Instance.TotalTasks <= GameData.Instance.CompletedTasks)
                 {
-                    __instance.enabled = false;
-                    ShipStatus.RpcEndGame(GameOverReason.HumansByTask, !DataManager.Player.Ads.HasPurchasedAdRemoval);
+                    ShipStatus.Instance.enabled = false;
+                    GameManager.Instance.RpcEndGame(GameOverReason.HumansByTask, !DataManager.Player.Ads.HasPurchasedAdRemoval);
                     return false;
                 }
             }
@@ -183,13 +185,13 @@ namespace PropHunt
                 if (allComplete)
                 {
                     DestroyableSingleton<HudManager>.Instance.ShowPopUp(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.GameOverTaskWin, System.Array.Empty<Il2CppSystem.Object>()));
-                    __instance.Begin();
+                    ShipStatus.Instance.Begin();
                 }
 
             }
             if (aliveImpostors <= 0)
             {
-                ShipStatus.RpcEndGame(GameOverReason.HumansByVote, !DataManager.Player.Ads.HasPurchasedAdRemoval);
+                GameManager.Instance.RpcEndGame(GameOverReason.HumansByVote, !DataManager.Player.Ads.HasPurchasedAdRemoval);
                 return false;
             }
             return false;
@@ -213,9 +215,9 @@ namespace PropHunt
             if (__instance.currentTarget == null && !__instance.isCoolingDown && !PlayerControl.LocalPlayer.Data.IsDead && !PlayerControl.LocalPlayer.inVent)
             {
                 PropHuntPlugin.missedKills++;
-                if (AmongUsClient.Instance.GameMode != GameModes.FreePlay)
+                if (AmongUsClient.Instance.NetworkMode != NetworkModes.FreePlay)
                 {
-                    TMPro.TextMeshPro pingText = GameObject.FindObjectOfType<PingTracker>().text;
+                    TextMeshPro pingText = GameObject.FindObjectOfType<PingTracker>().text;
                     pingText.text = string.Format("Remaining Attempts: {0}", PropHuntPlugin.maxMissedKills - PropHuntPlugin.missedKills);
                     pingText.color = Color.red;
                 }
@@ -225,7 +227,7 @@ namespace PropHunt
                     PropHuntPlugin.missedKills = 0;
                 }
                 Coroutines.Start(PropHuntPlugin.Utility.KillConsoleAnimation());
-                GameObject closestProp = PropHuntPlugin.Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, GameOptionsData.KillDistances[Mathf.Clamp(PlayerControl.GameOptions.KillDistance, 0, 2)]);
+                GameObject closestProp = PropHuntPlugin.Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, GameOptionsData.KillDistances[Mathf.Clamp(GameOptionsManager.Instance.currentNormalGameOptions.KillDistance, 0, 2)]);
                 if (closestProp != null)
                 {
                     GameObject.Destroy(closestProp.gameObject);
@@ -234,11 +236,11 @@ namespace PropHunt
         }
 
         // Make the game start with AT LEAST one impostor (happens if there are >4 players)
-        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.GetAdjustedNumImpostors))]
+        [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.GetAdjustedNumImpostors))]
         [HarmonyPrefix]
-        public static bool ForceNotZeroImps(GameOptionsData __instance, ref int __result)
+        public static bool ForceNotZeroImps(ref int __result)
         {
-            int numImpostors = PlayerControl.GameOptions.NumImpostors;
+            int numImpostors = GameOptionsManager.Instance.currentNormalGameOptions.NumImpostors;
             int num = 3;
             if (GameData.Instance.PlayerCount < GameOptionsData.MaxImpostors.Length)
             {
@@ -252,14 +254,12 @@ namespace PropHunt
             return false;
         }
 
-
-
         // Change the minimum amount of players to start a game
         [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
         [HarmonyPostfix]
         public static void MinPlayerPatch(GameStartManager __instance)
         {
-            __instance.MinPlayers = 2;
+            __instance.MinPlayers = 4;
         }
 
         // Disable a lot of stuff
@@ -304,9 +304,9 @@ namespace PropHunt
         }
 
         // Change the role text
-        [HarmonyPatch(typeof(IntroCutscene._ShowRole_d__24), nameof(IntroCutscene._ShowRole_d__24.MoveNext))]
+        [HarmonyPatch(typeof(IntroCutscene._ShowRole_d__39), nameof(IntroCutscene._ShowRole_d__39.MoveNext))]
         [HarmonyPostfix]
-        public static void IntroCutsceneRolePatch(IntroCutscene._ShowRole_d__24 __instance)
+        public static void IntroCutsceneRolePatch(IntroCutscene._ShowRole_d__39 __instance)
         {
             // IEnumerator hooking (help from @Daemon#6489 in the reactor discord)
             if (__instance.__1__state == 1)
@@ -325,9 +325,9 @@ namespace PropHunt
         }
 
         // Extend the intro cutscene for impostors
-        [HarmonyPatch(typeof(IntroCutscene._CoBegin_d__19), nameof(IntroCutscene._CoBegin_d__19.MoveNext))]
+        [HarmonyPatch(typeof(IntroCutscene._CoBegin_d__33), nameof(IntroCutscene._CoBegin_d__33.MoveNext))]
         [HarmonyPrefix]
-        public static bool IntroCutsceneCoBeginPatch(IntroCutscene._CoBegin_d__19 __instance)
+        public static bool IntroCutsceneCoBeginPatch(IntroCutscene._CoBegin_d__33 __instance)
         {
             if (__instance.__1__state != 2 || !PlayerControl.LocalPlayer.Data.Role.IsImpostor)
             {

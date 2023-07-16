@@ -69,9 +69,9 @@ namespace PropHunt
         }
 
 
-        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.ToHudString))]
+        [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.ToHudString))]
         [HarmonyPrefix]
-        public static void SyncCustomSettings(GameOptionsData __instance)
+        public static void SyncCustomSettings()
         {
             if (hidingOption && maxMissOption && infectionOption)
             {
