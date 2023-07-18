@@ -38,7 +38,7 @@ Download the zip from the [latest release](https://github.com/JeanAU/PropHunt-Re
 Although the mod *may* work on official servers, it is highly discouraged to do so, and will likely get you banned. Instead, try to add [MiniRegionInstall](https://github.com/miniduikboot/Mini.RegionInstall) you can see in their github repo.
 
 ## Compatability
-Prop Hunt is fully compatible with [Submerged] (https://github.com/SubmergedAmongUs/Submerged)!
+Prop Hunt is fully compatible with [Submerged](https://github.com/SubmergedAmongUs/Submerged)!
 
 
 However, Prop Hunt will **not** work with many other mods, such as role mods and any other mod which modifies the gameplay loop.
