@@ -1,4 +1,4 @@
-﻿// Core Script of PropHuntPlugin
+﻿// Core Script of PropHunt
 // Copyright (C) 2022  ugackMiner
 using BepInEx;
 using BepInEx.Configuration;
@@ -7,6 +7,7 @@ using HarmonyLib;
 using Reactor;
 using Reactor.Utilities;
 using Reactor.Networking.Rpc;
+using Hazel;
 using Reactor.Networking.Attributes;
 using UnityEngine;
 
@@ -16,37 +17,68 @@ namespace PropHunt;
 [BepInPlugin("com.jeanau.prophunt-r", "Prop Hunt-Reactivited", VersionString)]
 [BepInProcess("Among Us.exe")]
 [BepInDependency(ReactorPlugin.Id)]
-public partial class PropHuntPlugin : BasePlugin
+public partial class PropHunt : BasePlugin
 {
-    public const string VersionString = "2023.7.16";
+    public const string VersionString = "2023.8.25";
 
     // Backend Variables
     public Harmony Harmony { get; } = new("com.jeanau.prophunt-r");
 
-    public ConfigEntry<float> HidingTime { get; private set; }
+    public ConfigEntry<int> HidingTime { get; private set; }
     public ConfigEntry<int> MaxMissedKills { get; private set; }
     public ConfigEntry<bool> Infection { get; private set; }
+    public ConfigEntry<bool> Debug    {get; private set;}
 
     // Gameplay Variables
-    public static float hidingTime = 30f;
-    public static int maxMissedKills = 3;
-    public static bool infection = true;
+    public static int hidingTime
+    {
+        get => Instance.HidingTime.Value;
+        set 
+        {
+            Instance.HidingTime.Value = value;
+            Instance.Config.Save();
+        }
+    }
+    public static int maxMissedKills
+    {
+        get => Instance.MaxMissedKills.Value;
+        set
+        {
+            Instance.MaxMissedKills.Value = value;
+            Instance.Config.Save();
+        }
+    }
+    public static bool infection
+    {
+        get => Instance.Infection.Value;
+        set
+        {
+            Instance.Infection.Value = value;
+            Instance.Config.Save();
+        }
+    }
 
-    public static int missedKills = 0;
 
-    public static PropHuntPlugin Instance;
+     public static int missedKills = 0;
 
+     public static PropHunt Instance;
 
     public override void Load()
     {
-        HidingTime = Config.Bind("Prop Hunt", "Hiding Time", 30f);
+        HidingTime = Config.Bind("Prop Hunt", "Hiding Time", 30);
         MaxMissedKills = Config.Bind("Prop Hunt", "Max Misses", 3);
         Infection = Config.Bind("Prop Hunt", "Infection", true);
+        Debug = Config.Bind("Prop Hunt", "DebugManager", false);
 
-        Instance = PluginSingleton<PropHuntPlugin>.Instance;
+        Instance = this;
 
         Harmony.PatchAll(typeof(Patches));
         Harmony.PatchAll(typeof(CustomRoleSettings));
+        Harmony.PatchAll(typeof(Language));
+        Harmony.PatchAll(typeof(RPCPatch));
+        Harmony.PatchAll(typeof(VersionShower));
+
+        PluginSingleton<PropHunt>.Instance.Log.LogMessage($"Success fully Loaded PropHunt-R v{VersionString}");
     }
 
     public enum RPC
@@ -57,24 +89,24 @@ public partial class PropHuntPlugin : BasePlugin
 
     public static class RPCHandler
     {
-        // static MethodRpc rpc = new MethodRpc(PropHuntPlugin.Instance, Type.GetMethod("RPCPropSync"), RPC.PropSync, Hazel.SendOption.Reliable, RpcLocalHandling.None, true);
+        // static MethodRpc rpc = new MethodRpc(PropHunt.Instance, Type.GetMethod("RPCPropSync"), RPC.PropSync, Hazel.SendOption.Reliable, RpcLocalHandling.None, true);
         [MethodRpc((uint)RPC.PropSync)]
-        public static void RPCPropSync(PlayerControl player, string propIndex)
+        public static void RPCPropSync(PlayerControl player, int propIndex)
         {
-            GameObject prop = ShipStatus.Instance.AllConsoles[int.Parse(propIndex)].gameObject;
-            Logger<PropHuntPlugin>.Info($"{player.Data.PlayerName} changed their sprite to: {prop.name}");
+            GameObject prop = ShipStatus.Instance.AllConsoles[propIndex].gameObject;
+            Logger<PropHunt>.Info($"{player.Data.PlayerName} changed their sprite to: {prop.name}");
             player.GetComponent<SpriteRenderer>().sprite = prop.GetComponent<SpriteRenderer>().sprite;
             player.transform.localScale = prop.transform.lossyScale;
             player.Visible = false;
         }
 
         [MethodRpc((uint)RPC.SettingSync)]
-        public static void RPCSettingSync(PlayerControl player, float _hidingTime, int _missedKills, bool _infection)
+        public static void RPCSettingSync(PlayerControl player, int _hidingTime, int _missedKills, bool _infection)
         {
             hidingTime = _hidingTime;
             maxMissedKills = _missedKills;
             infection = _infection;
-            Logger<PropHuntPlugin>.Info("H: " + PropHuntPlugin.hidingTime + ", M: " + PropHuntPlugin.maxMissedKills + ", I: " + PropHuntPlugin.infection);
+            Logger<PropHunt>.Info("H: " + PropHunt.hidingTime + ", M: " + PropHunt.maxMissedKills + ", I: " + PropHunt.infection);
             if (player == PlayerControl.LocalPlayer && (hidingTime != Instance.HidingTime.Value || maxMissedKills != Instance.MaxMissedKills.Value || infection != Instance.Infection.Value))
             {
                 Instance.HidingTime.Value = hidingTime;
@@ -86,7 +118,7 @@ public partial class PropHuntPlugin : BasePlugin
     }
 
 
-    public static class Utility
+    public static  class Utility
     {
         public static GameObject FindClosestConsole(GameObject origin, float radius)
         {
@@ -105,7 +137,7 @@ public partial class PropHuntPlugin : BasePlugin
                 }
             }
             return bestCollider.gameObject;
-        }
+        } 
 
         public static System.Collections.IEnumerator KillConsoleAnimation()
         {
@@ -123,9 +155,10 @@ public partial class PropHuntPlugin : BasePlugin
         public static System.Collections.IEnumerator IntroCutsceneHidePatch(IntroCutscene __instance)
         {
             PlayerControl.LocalPlayer.moveable = false;
-            yield return new WaitForSeconds(PropHuntPlugin.hidingTime);
+            yield return new WaitForSeconds(PropHunt.hidingTime);
             PlayerControl.LocalPlayer.moveable = true;
             Object.Destroy(__instance.gameObject);
         }
     }
 }
+

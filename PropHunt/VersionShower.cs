@@ -10,7 +10,7 @@ namespace PropHunt
         public static void Postfix(VersionShower __instance)
         {
             var text = __instance.text;
-            text.text += " - <color=#ff0000>TownOfUs v" + PropHuntPlugin.VersionString + "</color>";
+            text.text += " - <color=#ff0000>PropHunt-R v" + PropHunt.VersionString + "</color>";
             text.transform.localPosition += new Vector3(-0.8f, -0.08f, 0f);
 
             if (GameObject.Find("RightPanel"))

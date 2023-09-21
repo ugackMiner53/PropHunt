@@ -1,28 +1,36 @@
+using System;
+using System.Text;
 using HarmonyLib;
-using UnityEngine;
 
 namespace PropHunt
 {
-    //[HarmonyPriority(Priority.VeryHigh)] // to show this message first, or be overrided if any plugins do
-    [HarmonyPatch(typeof(PingTracker), nameof(PingTracker.Update))]
-    public static class PingTracker_Update
+    public class PingTracker_Update
     {
 
+[HarmonyPatch(typeof(PingTracker),nameof(PingTracker.Update))]
         [HarmonyPostfix]
-        public static void Postfix(PingTracker __instance)
+        public static void PingTrackerPatch(PingTracker __instance)
         {
-            var position = __instance.GetComponent<AspectPosition>();
-            position.DistanceFromEdge = new Vector3(3.6f, 0.1f, 0);
-            position.AdjustPosition();
-
-            __instance.text.text =
-                "<color=#00FF00FF>PropHunt v" + PropHuntPlugin.VersionString + "</color>\n" +
-                $"Ping: {AmongUsClient.Instance.Ping}ms\n" +
-                (!MeetingHud.Instance
-                    ? "<color=#00FF00FF>Modded By: ugackMiner53 &</color>\n" +
-                    "<color=#00FF00FF>Continued : JeanAU</color>\n" : "") +
-                (AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started
-                    ? "<color=#00FF00FF>Formerly:Continued by : JeanAU</color>" : "");
+            StringBuilder ping = new();
+            ping.Append("\n<color=");
+            if (AmongUsClient.Instance.Ping < 100)
+            {
+                ping.Append("#0000FF>");
+            }
+            else if (AmongUsClient.Instance.Ping < 300)
+            {
+                ping.Append("#ffff00>");
+            }
+            else if (AmongUsClient.Instance.Ping > 300)
+            {
+                ping.Append("#ff0000>");
+            }
+            else if (AmongUsClient.Instance.Ping > 500)
+            {
+                ping.Append("#008000");
+            }
+            ping.Append(string.Format(Language.GetMessage(StringOptions.Ping), AmongUsClient.Instance.Ping)).Append($"</color>\n<size=130%>Prop Hunt Reactivited</size> v{PropHunt.VersionString}\n<size=65%>By <color=ff0000>JeanAU</color>\n <size=65%> Original dev <color=#008000>ugackMiner53</color></size>");
+            __instance.text.text = ping.ToString();
         }
     }
 }

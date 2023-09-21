@@ -35,11 +35,11 @@ Prop Hunt replaces the default roles in the game with two new roles, the **Seeke
 ## Installation
 Download the zip from the [latest release](https://github.com/JeanAU/PropHunt-Reactivited/releases), and extract the contents into your Among Us game folder.
 
-Although the mod *may* work on official servers, it is highly discouraged to do so, and will likely get you banned. Instead, try to add [MiniRegionInstall](https://github.com/miniduikboot/Mini.RegionInstall) you can see in their github repo.
+Although the mod *may* work on official servers, it is highly discouraged to do so, and will likely get you banned. Instead, howerver use Imposter or Hidenburg servers for playing. **You can see how setup in their readme page**
 
 ## Compatability
 Prop Hunt is fully compatible with [Submerged](https://github.com/SubmergedAmongUs/Submerged)!
-
+newest version
 
 However, Prop Hunt will **not** work with many other mods, such as role mods and any other mod which modifies the gameplay loop.
 
@@ -48,3 +48,32 @@ Contributions are welcome! Submit a [pull request](https://github.com/JeanAU/Pro
 
 ## Issues ?
 If you have any bugs or any need to contact me, join the Discord Server or create a ticket on GitHub.
+
+---
+
+## Changelog
+
+<details>
+  <summary> Changelog </summary>
+  <details>
+  <summary> v2023.7.11 </summary>
+  <ul>
+    <li> Bring Support AU 2023.7.12 </li>
+  </ul>
+  </details>
+  <details>
+  <summary> v2023.8.25 </summary>
+  <ul>
+    <li> a lots of bugs have been fixed </li>
+    <li> add a Translator </li>
+    <li> remove dead body when respawing </li>
+    <li> Many features chat, ohter things discover it youerself :smile: </li>
+    <li> the half of the mod has been rewriten to make the mod better on playing</li>
+  </ul>
+  </details>
+</details>
+
+
+#
+<p align="center">This mod is not affiliated with Among Us or Innersloth LLC, and the content contained therein is not endorsed or otherwise sponsored by Innersloth LLC. Portions of the materials contained herein are property of Innersloth LLC.</p>
+<p align="center">© Innersloth LLC.</p>
