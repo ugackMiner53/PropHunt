@@ -13,10 +13,11 @@ using System;
 using Il2CppInterop.Runtime.Injection;
 using AmongUs.GameOptions;
 using System.Collections.Generic;
+using Reactor.Localization.Utilities;
 
 namespace PropHunt;
 
-[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2022.11.5")]
+[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2024.7.21")]
 [BepInProcess("Among Us.exe")]
 [BepInDependency(ReactorPlugin.Id)]
 public partial class PropHuntPlugin : BasePlugin
@@ -36,22 +37,29 @@ public partial class PropHuntPlugin : BasePlugin
 
     // public static PropHuntPlugin Instance;
 
+    public static GameModes PropHuntGameMode;
 
     public override void Load()
     {
-        HidingTime = Config.Bind("Prop Hunt", "Hiding Time", 30f);
-        MaxMissedKills = Config.Bind("Prop Hunt", "Max Misses", 3);
-        Infection = Config.Bind("Prop Hunt", "Infection", true);
+        // HidingTime = Config.Bind("Prop Hunt", "Hiding Time", 30f);
+        // MaxMissedKills = Config.Bind("Prop Hunt", "Max Misses", 3);
+        // Infection = Config.Bind("Prop Hunt", "Infection", true);
 
         // Instance = PluginSingleton<PropHuntPlugin>.Instance;
 
         // Harmony.PatchAll(typeof(Patches));
         // Harmony.PatchAll(typeof(CustomRoleSettings));
-        Harmony.PatchAll(typeof(ExamplePatch));
+        // EnumInjector.InjectEnumValues<StringNames>(new Dictionary<string, object>{{"GameTypePropHunt", PropHuntGameString}});
+        int gameModeLength = Enum.GetValues<GameModes>().Length;
+        EnumInjector.InjectEnumValues<GameModes>(new Dictionary<string, object>{{"PropHunt", gameModeLength}});
+        PropHuntGameMode = (GameModes)gameModeLength;
 
+        StringNames propHuntName = CustomStringName.CreateAndRegister("Prop Hunt :3");
+        GameModesHelpers.ModeToName.Add(PropHuntGameMode, propHuntName);
 
-        EnumInjector.InjectEnumValues<GameModes>(new Dictionary<string, object>{{"PropHunt", 6}});
-        GameModesHelpers.ModeToName.add("PropHunt", "Prop Hunt");
+        
+        Harmony.PatchAll(typeof(GameModePatches));
+        // GameModesHelpers.ModeToName[Enum.GetValues<GameModes>()[-1]] = 5590401;
     }
 
     // public enum RPC

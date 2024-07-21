@@ -1,0 +1,600 @@
+using System;
+using AmongUs.GameOptions;
+using Hazel;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
+
+namespace PropHunt;
+
+public class PropHuntGameOptions : IGameOptions
+{
+    public override byte Version { get {return 8;} }
+
+    public new GameModes GameMode { get; private set; } = PropHuntPlugin.PropHuntGameMode;
+
+    public new SpecialGameModes SpecialMode;
+
+    // I do not care about april fools compat here
+    public override GameModes AprilFoolsOnMode { get { return PropHuntPlugin.PropHuntGameMode; }} 
+    public override GameModes AprilFoolsOffMode { get { return PropHuntPlugin.PropHuntGameMode; }}
+
+    public new RulesPresets RulesPreset;
+    public new int MaxPlayers = 15;
+    public new GameKeywords Keywords = GameKeywords.English;
+    public new byte MapId;
+    public new bool IsDefaults = true;
+    public new IRoleOptionsCollection RoleOptions {
+        get {
+            return this.roleOptions.Cast<IRoleOptionsCollection>();
+        }
+    }
+    public new int NumImposters {get; private set;} = 1;
+    public override int TotalTaskCount {
+        get {
+            return this.NumCommonTasks + this.NumLongTasks + this.NumShortTasks;
+        }
+    }
+
+    public PropHuntGameOptions(ILogger logger)
+    {
+        this.logger = logger;
+    }
+
+    public PropHuntGameOptions(IntPtr pointer) {
+        UnityEngine.Debug.LogWarning("Gameoptions init with pointer?");
+    }
+
+    public static void Serialize(MessageWriter writer, PropHuntGameOptions gameOptions)
+    {
+        writer.Write((byte)gameOptions.SpecialMode);
+        writer.Write((byte)gameOptions.RulesPreset);
+        writer.Write((byte)gameOptions.MaxPlayers);
+        writer.Write((uint)gameOptions.Keywords);
+        writer.Write(gameOptions.MapId);
+        writer.Write(gameOptions.PlayerSpeedMod);
+        writer.Write(gameOptions.CrewLightMod);
+        writer.Write(gameOptions.ImpostorLightMod);
+        writer.Write((byte)gameOptions.NumCommonTasks);
+        writer.Write((byte)gameOptions.NumLongTasks);
+        writer.Write((byte)gameOptions.NumShortTasks);
+        writer.Write(gameOptions.IsDefaults);
+        writer.Write(gameOptions.CrewmateVentUses);
+        writer.Write(gameOptions.EscapeTime);
+        writer.Write(gameOptions.CrewmateFlashlightSize);
+        writer.Write(gameOptions.ImpostorFlashlightSize);
+        writer.Write(gameOptions.useFlashlight);
+        writer.Write(gameOptions.SeekerFinalMap);
+        writer.Write(gameOptions.FinalCountdownTime);
+        writer.Write(gameOptions.SeekerFinalSpeed);
+        writer.Write(gameOptions.SeekerPings);
+        writer.Write(gameOptions.ShowCrewmateNames);
+        writer.Write(gameOptions.ImpostorPlayerID);
+        writer.Write(gameOptions.MaxPingTime);
+        writer.Write(gameOptions.CrewmateTimeInVent);
+    }
+
+    public static PropHuntGameOptions Deserialize(MessageReader reader, bool isAprilFoolsMode, ILogger logger)
+    {
+        try
+        {
+            PropHuntGameOptions propHuntGameOptions = new PropHuntGameOptions(logger)
+            {
+                SpecialMode = (SpecialGameModes)reader.ReadByte(),
+                RulesPreset = (RulesPresets)reader.ReadByte(),
+                MaxPlayers = (int)reader.ReadByte(),
+                Keywords = (GameKeywords)reader.ReadUInt32(),
+                MapId = reader.ReadByte(),
+                PlayerSpeedMod = reader.ReadSingle(),
+                CrewLightMod = reader.ReadSingle(),
+                ImpostorLightMod = reader.ReadSingle(),
+                NumCommonTasks = (int)reader.ReadByte(),
+                NumLongTasks = (int)reader.ReadByte(),
+                NumShortTasks = (int)reader.ReadByte(),
+                IsDefaults = reader.ReadBoolean(),
+                CrewmateVentUses = reader.ReadInt32(),
+                EscapeTime = reader.ReadSingle(),
+                CrewmateFlashlightSize = reader.ReadSingle(),
+                ImpostorFlashlightSize = reader.ReadSingle(),
+                useFlashlight = reader.ReadBoolean(),
+                SeekerFinalMap = reader.ReadBoolean(),
+                FinalCountdownTime = reader.ReadSingle(),
+                SeekerFinalSpeed = reader.ReadSingle(),
+                SeekerPings = reader.ReadBoolean(),
+                ShowCrewmateNames = reader.ReadBoolean(),
+                ImpostorPlayerID = reader.ReadInt32(),
+                MaxPingTime = reader.ReadSingle(),
+                CrewmateTimeInVent = reader.ReadSingle()
+            };
+            return propHuntGameOptions;
+        }
+        catch
+        {
+            logger.WriteError("Error when deserializing PropHuntGameOptions");
+        }
+        return null;
+    }
+
+    public override bool AreInvalid(int maxExpectedPlayers)
+    {
+        return this.MaxPlayers > maxExpectedPlayers || this.NumImpostors < 1 || this.NumImpostors > 3;
+    }
+
+        public override void SetRecommendations(int numPlayers, bool isOnline)
+    {
+        this.SetRecommendations(numPlayers, isOnline, RulesPresets.Standard);
+    }
+
+        public override void SetRecommendations(int numPlayers, bool isOnline, RulesPresets rulesPresets)
+    {
+        this.RulesPreset = rulesPresets;
+        this.IsDefaults = false;
+        this.PlayerSpeedMod = 1f;
+        this.NumCommonTasks = 1;
+        this.NumLongTasks = 1;
+        this.NumShortTasks = 2;
+        this.ImpostorPlayerID = -1;
+        this.SeekerFinalMap = true;
+        this.SeekerFinalSpeed = 1.2f;
+        this.SeekerPings = true;
+        this.CrewmateVentUses = 1;
+        this.CrewmateTimeInVent = 3f;
+        this.ShowCrewmateNames = false;
+        if (rulesPresets == RulesPresets.Flashlight)
+        {
+            this.useFlashlight = true;
+            this.EscapeTime = 240f;
+            this.FinalCountdownTime = 60f;
+            this.CrewmateFlashlightSize = 0.35f;
+            this.ImpostorFlashlightSize = 0.25f;
+            this.MaxPingTime = 5f;
+            return;
+        }
+        this.useFlashlight = false;
+        this.EscapeTime = 200f;
+        this.FinalCountdownTime = 50f;
+        this.CrewLightMod = 0.6f;
+        this.ImpostorLightMod = 0.4f;
+        this.MaxPingTime = 6f;
+    }
+
+    public override void SetByte(ByteOptionNames optionName, byte value)
+    {
+        if (optionName == ByteOptionNames.MapId)
+        {
+            this.MapId = value;
+            return;
+        }
+        this.logger.WriteError(string.Format("Options for Mode {0}, Version {1} could not set byte named {2}", this.GameMode, this.Version, optionName));
+    }
+
+    public override void SetFloat(FloatOptionNames optionName, float value)
+    {
+        switch (optionName)
+        {
+        case FloatOptionNames.KillCooldown:
+            this.KillCooldown = value;
+            return;
+        case FloatOptionNames.PlayerSpeedMod:
+            this.PlayerSpeedMod = value;
+            return;
+        case FloatOptionNames.ImpostorLightMod:
+            this.ImpostorLightMod = value;
+            return;
+        case FloatOptionNames.CrewLightMod:
+            this.CrewLightMod = value;
+            return;
+        default:
+            switch (optionName)
+            {
+            case FloatOptionNames.CrewmateTimeInVent:
+                this.CrewmateTimeInVent = value;
+                return;
+            case FloatOptionNames.FinalEscapeTime:
+                this.FinalCountdownTime = value;
+                return;
+            case FloatOptionNames.EscapeTime:
+                this.EscapeTime = value;
+                return;
+            case FloatOptionNames.SeekerFinalSpeed:
+                this.SeekerFinalSpeed = value;
+                return;
+            case FloatOptionNames.MaxPingTime:
+                this.MaxPingTime = value;
+                return;
+            case FloatOptionNames.CrewmateFlashlightSize:
+                this.CrewmateFlashlightSize = value;
+                return;
+            case FloatOptionNames.ImpostorFlashlightSize:
+                this.ImpostorFlashlightSize = value;
+                return;
+            default:
+                this.logger.WriteError(string.Format("Options for Mode {0}, Version {1} could not set float named {2}", this.GameMode, this.Version, optionName));
+                return;
+            }
+        }
+    }
+
+    public override void SetBool(BoolOptionNames optionName, bool value)
+    {
+        switch (optionName)
+        {
+        case BoolOptionNames.IsDefaults:
+            this.IsDefaults = value;
+            return;
+        case BoolOptionNames.UseFlashlight:
+            this.useFlashlight = value;
+            return;
+        case BoolOptionNames.SeekerFinalMap:
+            this.SeekerFinalMap = value;
+            return;
+        case BoolOptionNames.SeekerPings:
+            this.SeekerPings = value;
+            return;
+        case BoolOptionNames.ShowCrewmateNames:
+            this.ShowCrewmateNames = value;
+            return;
+        }
+        this.logger.WriteError(string.Format("Options for Mode {0}, Version {1} could not set bool named {2}", this.GameMode, this.Version, optionName));
+    }
+
+    public override void SetInt(Int32OptionNames optionName, int value)
+    {
+        if (optionName <= Int32OptionNames.NumLongTasks)
+        {
+            if (optionName == Int32OptionNames.NumImpostors)
+            {
+                // this.NumImpostors = value;
+                return;
+            }
+            if (optionName == Int32OptionNames.KillDistance)
+            {
+                this.KillDistance = value;
+                return;
+            }
+            switch (optionName)
+            {
+            case Int32OptionNames.MaxPlayers:
+                this.MaxPlayers = value;
+                return;
+            case Int32OptionNames.NumCommonTasks:
+                this.NumCommonTasks = value;
+                return;
+            case Int32OptionNames.NumShortTasks:
+                this.NumShortTasks = value;
+                return;
+            case Int32OptionNames.NumLongTasks:
+                this.NumLongTasks = value;
+                return;
+            }
+        }
+        else
+        {
+            if (optionName == Int32OptionNames.CrewmateVentUses)
+            {
+                this.CrewmateVentUses = value;
+                return;
+            }
+            if (optionName == Int32OptionNames.ImpostorPlayerID)
+            {
+                this.ImpostorPlayerID = value;
+                return;
+            }
+            if (optionName == Int32OptionNames.RulePreset)
+            {
+                this.RulesPreset = (RulesPresets)value;
+                return;
+            }
+        }
+        this.logger.WriteError(string.Format("Options for Mode {0}, Version {1} could not set int named {2}", this.GameMode, this.Version, optionName));
+    }
+
+    public override void SetUInt(UInt32OptionNames optionName, uint value)
+    {
+        if (optionName == UInt32OptionNames.Keywords)
+        {
+            this.Keywords = (GameKeywords)value;
+            return;
+        }
+        this.logger.WriteError(string.Format("Options for Mode {0}, Version {1} could not set uint named {2}", this.GameMode, this.Version, optionName));
+    }
+
+    public override byte GetByte(ByteOptionNames optionName)
+    {
+        byte b;
+        if (this.TryGetByte(optionName, out b))
+        {
+            return b;
+        }
+        return 0;
+    }
+
+    public override float GetFloat(FloatOptionNames optionName)
+    {
+        float num;
+        if (this.TryGetFloat(optionName, out num))
+        {
+            return num;
+        }
+        return 0f;
+    }
+
+    public override bool GetBool(BoolOptionNames optionName)
+    {
+        bool flag;
+        return this.TryGetBool(optionName, out flag) && flag;
+    }
+
+    public override int GetInt(Int32OptionNames optionName)
+    {
+        int num;
+        if (this.TryGetInt(optionName, out num))
+        {
+            return num;
+        }
+        return 0;
+    }
+
+    public override Il2CppStructArray<int> GetIntArray(Int32ArrayOptionNames optionName)
+    {
+        Il2CppStructArray<int> array;
+        if (this.TryGetIntArray(optionName, out array))
+        {
+            return array;
+        }
+        return null;
+    }
+
+    public override Il2CppStructArray<float> GetFloatArray(FloatArrayOptionNames optionName)
+    {
+        Il2CppStructArray<float> array;
+        if (this.TryGetFloatArray(optionName, out array))
+        {
+            return array;
+        }
+        return null;
+    }
+
+    public override bool TryGetByte(ByteOptionNames optionName, out byte value)
+    {
+        value = 0;
+        if (optionName == ByteOptionNames.MapId)
+        {
+            value = this.MapId;
+            return true;
+        }
+        return false;
+    }
+
+    public override bool TryGetFloat(FloatOptionNames optionName, out float value)
+    {
+        value = 0f;
+        switch (optionName)
+        {
+        case FloatOptionNames.KillCooldown:
+            value = this.KillCooldown;
+            return true;
+        case FloatOptionNames.PlayerSpeedMod:
+            value = this.PlayerSpeedMod;
+            return true;
+        case FloatOptionNames.ImpostorLightMod:
+            value = this.ImpostorLightMod;
+            return true;
+        case FloatOptionNames.CrewLightMod:
+            value = this.CrewLightMod;
+            return true;
+        default:
+            switch (optionName)
+            {
+                case FloatOptionNames.CrewmateTimeInVent:
+                    value = this.CrewmateTimeInVent;
+                    return true;
+                case FloatOptionNames.FinalEscapeTime:
+                    value = this.FinalCountdownTime;
+                    return true;
+                case FloatOptionNames.EscapeTime:
+                    value = this.EscapeTime;
+                    return true;
+                case FloatOptionNames.SeekerFinalSpeed:
+                    value = this.SeekerFinalSpeed;
+                    return true;
+                case FloatOptionNames.MaxPingTime:
+                    value = this.MaxPingTime;
+                    return true;
+                case FloatOptionNames.CrewmateFlashlightSize:
+                    value = this.CrewmateFlashlightSize;
+                    return true;
+                case FloatOptionNames.ImpostorFlashlightSize:
+                    value = this.ImpostorFlashlightSize;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
+
+    public override bool TryGetBool(BoolOptionNames optionName, out bool value)
+    {
+        value = false;
+        switch (optionName)
+        {
+        case BoolOptionNames.GhostsDoTasks:
+            value = this.GhostsDoTasks;
+            return true;
+        case BoolOptionNames.IsDefaults:
+            value = this.IsDefaults;
+            return true;
+        case BoolOptionNames.UseFlashlight:
+            value = this.useFlashlight;
+            return true;
+        case BoolOptionNames.SeekerFinalMap:
+            value = this.SeekerFinalMap;
+            return true;
+        case BoolOptionNames.SeekerPings:
+            value = this.SeekerPings;
+            return true;
+        case BoolOptionNames.ShowCrewmateNames:
+            value = this.ShowCrewmateNames;
+            return true;
+        }
+        return false;
+    }
+
+    public override bool TryGetInt(Int32OptionNames optionName, out int value)
+    {
+        value = 0;
+        if (optionName <= Int32OptionNames.KillDistance)
+        {
+            if (optionName == Int32OptionNames.NumImpostors)
+            {
+                value = this.NumImpostors;
+                return true;
+            }
+            if (optionName == Int32OptionNames.KillDistance)
+            {
+                value = this.KillDistance;
+                return true;
+            }
+        }
+        else
+        {
+            switch (optionName)
+            {
+            case Int32OptionNames.NumCommonTasks:
+                value = this.NumCommonTasks;
+                return true;
+            case Int32OptionNames.NumShortTasks:
+                value = this.NumShortTasks;
+                return true;
+            case Int32OptionNames.NumLongTasks:
+                value = this.NumLongTasks;
+                return true;
+            default:
+                if (optionName == Int32OptionNames.CrewmateVentUses)
+                {
+                    value = this.CrewmateVentUses;
+                    return true;
+                }
+                if (optionName == Int32OptionNames.ImpostorPlayerID)
+                {
+                    value = this.ImpostorPlayerID;
+                    return true;
+                }
+                break;
+            }
+        }
+        return false;
+    }
+
+    public override bool TryGetIntArray(Int32ArrayOptionNames optionName, out Il2CppStructArray<int> value)
+    {
+        value = null;
+        if (optionName == Int32ArrayOptionNames.MaxImpostors)
+        {
+            value = PropHuntGameOptions.MaxImpostors;
+            return true;
+        }
+        if (optionName != Int32ArrayOptionNames.MinPlayers)
+        {
+            return false;
+        }
+        value = PropHuntGameOptions.MinPlayers;
+        return true;
+    }
+
+    public override bool TryGetFloatArray(FloatArrayOptionNames optionName, out Il2CppStructArray<float> value)
+    {
+        value = null;
+        if (optionName == FloatArrayOptionNames.KillDistances)
+        {
+            value = PropHuntGameOptions.KillDistances;
+            return true;
+        }
+        return false;
+    }
+
+    public override bool TryClearAprilFoolsMode()
+    {
+        // bool flag = this.GameMode == this.AprilFoolsOnMode;
+        // this.GameMode = this.AprilFoolsOffMode;
+        // return flag;
+        return false;
+    }
+
+    public int GetRoleRateChange(IGameOptions oldOptions, out int roleStringName, out int chance, out int count)
+    {
+        roleStringName = 0;
+        chance = 0;
+        count = 0;
+        return -1;
+    }
+
+    public static readonly float[] KillDistances = new float[] { 0.6f, 0.6f, 0.6f };
+
+    private static readonly int[] MaxImpostors = new int[]
+    {
+        0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1
+    };
+
+    private static readonly int[] MinPlayers = new int[] { 4, 4, 7, 9 };
+
+    public int ImpostorPlayerID = -1;
+
+    public float PlayerSpeedMod = 1f;
+
+    public float CrewLightMod = 1f;
+
+    public float ImpostorLightMod = 1.5f;
+
+    public float KillCooldown = 1f;
+
+    public int NumCommonTasks = 1;
+
+    public int NumLongTasks = 1;
+
+    public int NumShortTasks = 2;
+
+    public bool GhostsDoTasks = true;
+
+    public int KillDistance;
+
+    public const float ImpostorSpeedDifference = 0.25f;
+
+    public int CrewmateVentUses = 1;
+
+    public float CrewmateTimeInVent = 3f;
+
+    public float EscapeTime = 200f;
+
+    public float FinalCountdownTime = 50f;
+
+    public float CrewmateFlashlightSize = 0.35f;
+
+    public float ImpostorFlashlightSize = 0.25f;
+
+    public bool useFlashlight = true;
+
+    
+    public bool SeekerFinalMap = true;
+
+    public float SeekerFinalSpeed = 1.2f;
+
+    public bool ShowCrewmateNames;
+
+    public float MaxPingTime = 6f;
+
+    public bool SeekerPings = true;
+
+    public const int CrewmateLeadTime = 10;
+
+    public const float ScaryMusicDistance = 55f;
+
+    public const float VeryScaryMusicDistance = 15f;
+
+    public const float CrewmateVentCooldown = 1f;
+
+    public const float ShowPingTime = 2f;
+
+    private readonly ILogger logger;
+
+    private RoleOptionsCollectionV08 roleOptions = new RoleOptionsCollectionV08();
+}

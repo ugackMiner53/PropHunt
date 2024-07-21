@@ -25,6 +25,12 @@
         <PackageReference Include="BepInEx.IL2CPP.MSBuild" Version="2.0.1" PrivateAssets="all" ExcludeAssets="runtime" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Deobfuscate Include="../.references/Assembly-CSharp-2024.6.18.dll" />
+
+        <!-- <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="0.3.0" /> -->
+    </ItemGroup>
+
     <Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AmongUs)/BepInEx/plugins/" UseSymboliclinksIfPossible="true" />
     </Target>
