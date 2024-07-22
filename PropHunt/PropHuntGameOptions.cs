@@ -8,12 +8,12 @@ public class PropHuntGameOptions : HideNSeekGameOptionsV08
     public PropHuntGameOptions(ILogger logger) : base(logger)
     {
         UnityEngine.Debug.Log("Prop Hunt game options init");
-        this.GameMode = PropHuntPlugin.PropHuntGameMode;
+        this.GameMode = GameModes.HideNSeek;
     }
 
     #region April Fools Removal
-    public override GameModes AprilFoolsOnMode {get {return PropHuntPlugin.PropHuntGameMode;}}
-    public override GameModes AprilFoolsOffMode {get {return PropHuntPlugin.PropHuntGameMode;}}
+    public override GameModes AprilFoolsOnMode {get {return GameModes.HideNSeek;}}
+    public override GameModes AprilFoolsOffMode {get {return GameModes.HideNSeek;}}
     #endregion
 
 
