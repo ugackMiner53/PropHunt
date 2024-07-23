@@ -22,16 +22,17 @@ public static class RPCHandler
         GameObject prop = ShipStatus.Instance.AllConsoles[int.Parse(propIndex)].gameObject;
         Logger<PropHuntPlugin>.Info($"{player.Data.PlayerName} changed their sprite to: {prop.name}");
 
-        SpriteRenderer spriteRenderer = player.GetComponent<SpriteRenderer>();
-        spriteRenderer.transform.localScale = prop.transform.lossyScale;
-        spriteRenderer.sprite = prop.GetComponent<SpriteRenderer>().sprite;
+        SpriteRenderer propRenderer = PropManager.playerToProp[player];
+        propRenderer.transform.localScale = prop.transform.lossyScale * 1.429f;
+        propRenderer.transform.localPosition = new Vector3(0, 0, -15);
+        propRenderer.sprite = prop.GetComponent<SpriteRenderer>().sprite;
         player.Visible = false;
     }
 
     [MethodRpc((uint)RPC.PropPos)]
     public static void RPCPropPos(PlayerControl player, Vector2 position) 
     {
-        
+        PropManager.playerToProp[player].transform.localPosition = new Vector3(position.x, position.y, -15);
     }
 
     [MethodRpc((uint)RPC.FailedKill)]

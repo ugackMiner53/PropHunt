@@ -3,10 +3,9 @@
 using HarmonyLib;
 using Reactor;
 using UnityEngine;
-using AmongUs.Data;
 using Reactor.Utilities;
 using AmongUs.GameOptions;
-using Reactor.Networking.Rpc;
+using Reactor.Utilities.Extensions;
 
 namespace PropHunt
 {
@@ -14,30 +13,74 @@ namespace PropHunt
     {
         // Main input loop for custom keys
         [HarmonyPatch(typeof(KeyboardJoystick), nameof(KeyboardJoystick.Update))]
-        [HarmonyPostfix]
-        public static void PlayerInputControlPatch(KeyboardJoystick __instance)
+        [HarmonyPrefix]
+        public static bool PlayerInputControlPatch(KeyboardJoystick __instance)
         {
             PlayerControl player = PlayerControl.LocalPlayer;
-            if (Input.GetKeyDown(KeyCode.R) && !player.Data.Role.IsImpostor)
+
+            if (!PropHuntPlugin.isPropHunt || player.Data.Role.IsImpostor || KeyboardJoystick.player == null) return true;
+
+            
+            // Change Prop
+            if (Input.GetKeyDown(KeyCode.R)) // KeyboardJoystick.player.GetButtonDown(49) for Use Ability keybind
             {
                 Logger<PropHuntPlugin>.Info("Key pressed");
                 GameObject closestConsole = Utility.FindClosestConsole(player.gameObject, 3);
                 if (closestConsole != null)
                 {
-                    SpriteRenderer spriteRenderer = player.GetComponent<SpriteRenderer>();
-                    spriteRenderer.transform.localScale = closestConsole.transform.lossyScale;
-                    spriteRenderer.sprite = closestConsole.GetComponent<SpriteRenderer>().sprite;
-
                     for (int i = 0; i < ShipStatus.Instance.AllConsoles.Length; i++)
                     {
                         if (ShipStatus.Instance.AllConsoles[i] == closestConsole.GetComponent<Console>())
                         {
                             Logger<PropHuntPlugin>.Info("Task of index " + i + " being sent out");
                             RPCHandler.RPCPropSync(PlayerControl.LocalPlayer, i + "");
+                            break;
                         }
                     }
                 }
             }
+
+            // Move Prop
+            if (PropManager.playerToProp.ContainsKey(player)) 
+            {
+                if (Input.GetKey(KeyCode.LeftShift)) { // KeyboardJoystick.player.GetButton(7) for Report Button
+                    // Disable default movement
+                    __instance.del = Vector2.zero;
+
+                    Vector2 inputDirection = new Vector2();
+
+                    if (KeyboardJoystick.player.GetButton(40)) {
+                        inputDirection.x += 1f;
+                    }
+                    if (KeyboardJoystick.player.GetButton(39)){
+                        inputDirection.x -= 1f;
+                    }
+                    if (KeyboardJoystick.player.GetButton(44)) {
+                        inputDirection.y += 1f;
+                    }
+                    if (KeyboardJoystick.player.GetButton(42)) {
+                        inputDirection.y -= 1f;
+                    }
+
+                    Transform prop = PropManager.playerToProp[player].transform;
+                    Vector3 newPosition = new Vector3(prop.localPosition.x + inputDirection.x * PropHuntPlugin.propMoveSpeed * Time.deltaTime, prop.localPosition.y + inputDirection.y * PropHuntPlugin.propMoveSpeed * Time.deltaTime, -15);
+
+                    // Limit position to within kill distance
+                    if (Vector2.Distance(Vector2.zero, newPosition) < PropHuntPlugin.maxPropDistance) {
+                        prop.localPosition = newPosition;
+                    }
+
+                    return false;
+
+                } else if (Input.GetKeyUp(KeyCode.LeftShift)) { // KeyboardJoystick.player.GetButtonUp(7) for Report button
+                    Transform prop = PropManager.playerToProp[player].transform;
+
+                    RPCHandler.RPCPropPos(player, prop.localPosition);
+                }
+                
+            }
+
+            return true;
         }
 
         // Runs when the player is created
@@ -45,7 +88,12 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void PlayerControlStartPatch(PlayerControl __instance)
         {
-            __instance.gameObject.AddComponent<SpriteRenderer>();
+            GameObject propObj = new GameObject("Prop");
+            SpriteRenderer propRenderer = propObj.AddComponent<SpriteRenderer>();
+            propObj.transform.SetParent(__instance.transform);
+            propObj.transform.localPosition = new Vector3(0, 0, -15);
+            propObj.transform.localScale = Vector2.one;
+            PropManager.playerToProp.Add(__instance, propRenderer);
         }
 
 
@@ -56,35 +104,35 @@ namespace PropHunt
         {
             if (!AmongUsClient.Instance.IsGameStarted || !PropHuntPlugin.isPropHunt)
                 return;
-            
-            if (__instance.myPlayer.Visible && __instance.GetComponent<SpriteRenderer>().sprite != null && !__instance.myPlayer.Data.Role.IsImpostor)
+
+            if (__instance.myPlayer.Visible && !__instance.myPlayer.Data.Role.IsImpostor && !__instance.myPlayer.Data.IsDead)
             {
                 __instance.myPlayer.Visible = false;
             }
-
-            if (!__instance.myPlayer.Visible && __instance.myPlayer.Data.IsDead)
-            {
-                __instance.myPlayer.Visible = true;
-                GameObject.Destroy(__instance.GetComponent<SpriteRenderer>());
-            }
         }
 
-        // Make prop impostor on death
+        // Remove Prop on death & Make impostor if infection
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.Die))]
         [HarmonyPostfix]
-        public static void MakePropImpostorPatch(PlayerControl __instance)
+        public static void OnPlayerDiePatch(PlayerControl __instance) 
         {
-            if (PropHuntPlugin.isPropHunt && !__instance.Data.Role.IsImpostor && PropHuntPlugin.infection)
+            if (!PropHuntPlugin.isPropHunt || __instance.Data.Role.IsImpostor) return;
+
+            SpriteRenderer prop = PropManager.playerToProp[__instance];
+            if (prop != null) 
             {
-                __instance.Revive();
+                Logger<PropHuntPlugin>.Info("Removing Prop Lol!");
+                prop.gameObject.Destroy();
+                PropManager.playerToProp.Remove(__instance);
+            }
+
+            if (PropHuntPlugin.infection)
+            {
                 __instance.Data.Role.TeamType = RoleTeamTypes.Impostor;
                 DestroyableSingleton<RoleManager>.Instance.SetRole(__instance, AmongUs.GameOptions.RoleTypes.Impostor);
-                __instance.transform.localScale = new Vector3(0.7f, 0.7f, 1);
+                __instance.Revive();
+                __instance.transform.position = new Vector3(__instance.transform.position.x, __instance.transform.position.y, -30);
                 __instance.Visible = true;
-                // foreach (SpriteRenderer rend in __instance.GetComponentsInChildren<SpriteRenderer>())
-                // {
-                //     rend.sortingOrder += 5;
-                // }
             }
         }
 
@@ -117,14 +165,7 @@ namespace PropHunt
             if (PropHuntPlugin.isPropHunt && __instance.currentTarget == null && !__instance.isCoolingDown && !PlayerControl.LocalPlayer.Data.IsDead && !PlayerControl.LocalPlayer.inVent)
             {
                 RPCHandler.RPCFailedKill(PlayerControl.LocalPlayer);
-                Logger<PropHuntPlugin>.Warning("Not RPC failed kill");
                 PlayerControl.LocalPlayer.SetKillTimer(3f);
-                Coroutines.Start(Utility.KillConsoleAnimation());
-                GameObject closestProp = Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, GameOptionsManager.Instance.CurrentGameOptions.GetInt(Int32OptionNames.KillDistance));
-                if (closestProp != null)
-                {
-                    GameObject.Destroy(closestProp.gameObject);
-                }
             }
         }
 
@@ -146,40 +187,6 @@ namespace PropHunt
             return true;
         }
 
-        // Disable the validation check for maximum impostors
-        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.Validate))]
-        [HarmonyPrefix]
-        public static bool DisableMinImpValidation(GameOptionsData __instance, ref bool __result) 
-        {
-            if (PropHuntPlugin.isPropHunt) {
-                __result = false;
-                return false;
-            }
-            return true;
-        }
-
-
-
-        // Change the minimum amount of players to start a game
-        [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
-        [HarmonyPostfix]
-        public static void MinPlayerPatch(GameStartManager __instance)
-        {
-            __instance.MinPlayers = 2;
-        }
-
-        // Disable a lot of stuff (not needed anymore bcause of hidenseek)
-        // [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CmdReportDeadBody))]
-        // [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowSabotageMap))]
-        // [HarmonyPatch(typeof(Vent), nameof(Vent.Use))]
-        // [HarmonyPatch(typeof(Vent), nameof(Vent.SetOutline))]
-        // [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowCountOverlay))]
-        // [HarmonyPrefix]
-        // public static bool DisableFunctions()
-        // {
-        //     return false;
-        // }
-
         [HarmonyPatch(typeof(ShadowCollab), nameof(ShadowCollab.OnEnable))]
         [HarmonyPrefix]
         public static bool DisableShadows(ShadowCollab __instance)
@@ -193,14 +200,6 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void IntroCuscenePatch()
         {
-
-            // if (PlayerControl.LocalPlayer.Data.Role.IsImpostor)
-            // {
-            //     foreach (SpriteRenderer rend in PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>())
-            //     {
-            //         rend.sortingOrder += 5;
-            //     }
-            // }
             DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
         }
     }

@@ -6,14 +6,6 @@ using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using Reactor;
 using Reactor.Utilities;
-using Reactor.Networking.Rpc;
-using Reactor.Networking.Attributes;
-using UnityEngine;
-using System;
-using Il2CppInterop.Runtime.Injection;
-using AmongUs.GameOptions;
-using System.Collections.Generic;
-using Reactor.Localization.Utilities;
 
 namespace PropHunt;
 
@@ -31,6 +23,10 @@ public partial class PropHuntPlugin : BasePlugin
     public static float missTimePenalty = 10f;
     public static bool infection = false;
     public static bool isPropHunt = true;
+    
+    // Constants
+    public const float propMoveSpeed = 0.5f; 
+    public const float maxPropDistance = 0.6f; 
 
     public static PropHuntPlugin Instance;
 
