@@ -1,3 +1,4 @@
+using AmongUs.GameOptions;
 using Reactor.Networking.Attributes;
 using Reactor.Utilities;
 using UnityEngine;
@@ -20,8 +21,10 @@ public static class RPCHandler
     {
         GameObject prop = ShipStatus.Instance.AllConsoles[int.Parse(propIndex)].gameObject;
         Logger<PropHuntPlugin>.Info($"{player.Data.PlayerName} changed their sprite to: {prop.name}");
-        player.GetComponent<SpriteRenderer>().sprite = prop.GetComponent<SpriteRenderer>().sprite;
-        player.transform.localScale = prop.transform.lossyScale;
+
+        SpriteRenderer spriteRenderer = player.GetComponent<SpriteRenderer>();
+        spriteRenderer.transform.localScale = prop.transform.lossyScale;
+        spriteRenderer.sprite = prop.GetComponent<SpriteRenderer>().sprite;
         player.Visible = false;
     }
 
@@ -32,9 +35,17 @@ public static class RPCHandler
     }
 
     [MethodRpc((uint)RPC.FailedKill)]
-    public static void FailedKill(PlayerControl player) 
+    public static void RPCFailedKill(PlayerControl player) 
     {
         // Unsure if this is needed, decrease timer by missPenalty
+        Logger<PropHuntPlugin>.Warning("RPC Failed Kill");
+        GameManager.Instance.Cast<HideAndSeekManager>().LogicFlowHnS.AdjustEscapeTimer(PropHuntPlugin.missTimePenalty, true);
+        Coroutines.Start(Utility.KillConsoleAnimation());
+        GameObject closestProp = Utility.FindClosestConsole(player.gameObject, GameOptionsManager.Instance.CurrentGameOptions.GetInt(Int32OptionNames.KillDistance));
+        if (closestProp != null)
+        {
+            GameObject.Destroy(closestProp.gameObject);
+        }
     }
 
     [MethodRpc((uint)RPC.SettingSync)]

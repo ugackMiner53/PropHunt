@@ -5,6 +5,8 @@ using Reactor;
 using UnityEngine;
 using AmongUs.Data;
 using Reactor.Utilities;
+using AmongUs.GameOptions;
+using Reactor.Networking.Rpc;
 
 namespace PropHunt
 {
@@ -22,8 +24,10 @@ namespace PropHunt
                 GameObject closestConsole = Utility.FindClosestConsole(player.gameObject, 3);
                 if (closestConsole != null)
                 {
-                    player.transform.localScale = closestConsole.transform.lossyScale;
-                    player.GetComponent<SpriteRenderer>().sprite = closestConsole.GetComponent<SpriteRenderer>().sprite;
+                    SpriteRenderer spriteRenderer = player.GetComponent<SpriteRenderer>();
+                    spriteRenderer.transform.localScale = closestConsole.transform.lossyScale;
+                    spriteRenderer.sprite = closestConsole.GetComponent<SpriteRenderer>().sprite;
+
                     for (int i = 0; i < ShipStatus.Instance.AllConsoles.Length; i++)
                     {
                         if (ShipStatus.Instance.AllConsoles[i] == closestConsole.GetComponent<Console>())
@@ -33,14 +37,6 @@ namespace PropHunt
                         }
                     }
                 }
-            }
-            if (Input.GetKeyDown(KeyCode.LeftShift))
-            {
-                player.Collider.enabled = false;
-            }
-            else if (Input.GetKeyUp(KeyCode.LeftShift))
-            {
-                player.Collider.enabled = true;
             }
         }
 
@@ -58,13 +54,15 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void PlayerPhysicsAnimationPatch(PlayerPhysics __instance)
         {
-            if (!AmongUsClient.Instance.IsGameStarted)
+            if (!AmongUsClient.Instance.IsGameStarted || !PropHuntPlugin.isPropHunt)
                 return;
-            if (__instance.GetComponent<SpriteRenderer>().sprite != null && !__instance.myPlayer.Data.Role.IsImpostor)
+            
+            if (__instance.myPlayer.Visible && __instance.GetComponent<SpriteRenderer>().sprite != null && !__instance.myPlayer.Data.Role.IsImpostor)
             {
                 __instance.myPlayer.Visible = false;
             }
-            if (__instance.myPlayer.Data.IsDead)
+
+            if (!__instance.myPlayer.Visible && __instance.myPlayer.Data.IsDead)
             {
                 __instance.myPlayer.Visible = true;
                 GameObject.Destroy(__instance.GetComponent<SpriteRenderer>());
@@ -76,22 +74,17 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void MakePropImpostorPatch(PlayerControl __instance)
         {
-            if (!__instance.Data.Role.IsImpostor && PropHuntPlugin.infection)
+            if (PropHuntPlugin.isPropHunt && !__instance.Data.Role.IsImpostor && PropHuntPlugin.infection)
             {
-                foreach (GameData.Task task in __instance.Data.Tasks)
-                {
-                    task.Complete = true;
-                }
-                GameData.Instance.RecomputeTaskCounts();
                 __instance.Revive();
                 __instance.Data.Role.TeamType = RoleTeamTypes.Impostor;
-                DestroyableSingleton<RoleManager>.Instance.SetRole(__instance, RoleTypes.Impostor);
+                DestroyableSingleton<RoleManager>.Instance.SetRole(__instance, AmongUs.GameOptions.RoleTypes.Impostor);
                 __instance.transform.localScale = new Vector3(0.7f, 0.7f, 1);
                 __instance.Visible = true;
-                foreach (SpriteRenderer rend in __instance.GetComponentsInChildren<SpriteRenderer>())
-                {
-                    rend.sortingOrder += 5;
-                }
+                // foreach (SpriteRenderer rend in __instance.GetComponentsInChildren<SpriteRenderer>())
+                // {
+                //     rend.sortingOrder += 5;
+                // }
             }
         }
 
@@ -104,28 +97,30 @@ namespace PropHunt
             __instance.SetEnabled();
         }
 
+        // Make impostor able to kill invisible players
+        [HarmonyPatch(typeof(ImpostorRole), nameof(ImpostorRole.IsValidTarget))]
+        [HarmonyPrefix]
+        public static bool ValidKillTargetPatch(ImpostorRole __instance, ref bool __result, NetworkedPlayerInfo target) 
+        {
+            if (PropHuntPlugin.isPropHunt) {
+                __result = !(target == null) && !target.Disconnected && !target.IsDead && target.PlayerId != __instance.Player.PlayerId && !(target.Role == null) && !(target.Object == null) && !target.Object.inVent && !target.Object.inMovingPlat && target.Role.CanBeKilled;
+                return false;
+            }
+            return true;
+        }
 
         // Penalize the impostor if there is no prop killed
         [HarmonyPatch(typeof(KillButton), nameof(KillButton.DoClick))]
         [HarmonyPrefix]
         public static void KillButtonClickPatch(KillButton __instance)
         {
-            if (__instance.currentTarget == null && !__instance.isCoolingDown && !PlayerControl.LocalPlayer.Data.IsDead && !PlayerControl.LocalPlayer.inVent)
+            if (PropHuntPlugin.isPropHunt && __instance.currentTarget == null && !__instance.isCoolingDown && !PlayerControl.LocalPlayer.Data.IsDead && !PlayerControl.LocalPlayer.inVent)
             {
-                PropHuntPlugin.missedKills++;
-                if (AmongUsClient.Instance.GameMode != GameModes.FreePlay)
-                {
-                    TMPro.TextMeshPro pingText = GameObject.FindObjectOfType<PingTracker>().text;
-                    pingText.text = string.Format("Remaining Attempts: {0}", PropHuntPlugin.maxMissedKills - PropHuntPlugin.missedKills);
-                    pingText.color = Color.red;
-                }
-                if (PropHuntPlugin.missedKills >= PropHuntPlugin.maxMissedKills)
-                {
-                    PlayerControl.LocalPlayer.CmdCheckMurder(PlayerControl.LocalPlayer);
-                    PropHuntPlugin.missedKills = 0;
-                }
-                Coroutines.Start(PropHuntPlugin.Utility.KillConsoleAnimation());
-                GameObject closestProp = PropHuntPlugin.Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, GameOptionsData.KillDistances[Mathf.Clamp(PlayerControl.GameOptions.KillDistance, 0, 2)]);
+                RPCHandler.RPCFailedKill(PlayerControl.LocalPlayer);
+                Logger<PropHuntPlugin>.Warning("Not RPC failed kill");
+                PlayerControl.LocalPlayer.SetKillTimer(3f);
+                Coroutines.Start(Utility.KillConsoleAnimation());
+                GameObject closestProp = Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, GameOptionsManager.Instance.CurrentGameOptions.GetInt(Int32OptionNames.KillDistance));
                 if (closestProp != null)
                 {
                     GameObject.Destroy(closestProp.gameObject);
@@ -134,22 +129,33 @@ namespace PropHunt
         }
 
         // Make the game start with AT LEAST one impostor (happens if there are >4 players)
-        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.GetAdjustedNumImpostors))]
+        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.TryGetInt))]
         [HarmonyPrefix]
-        public static bool ForceNotZeroImps(GameOptionsData __instance, ref int __result)
+        public static bool ForceNotZeroImps(GameOptionsData __instance, Int32OptionNames optionName, out int value)
         {
-            int numImpostors = PlayerControl.GameOptions.NumImpostors;
-            int num = 3;
-            if (GameData.Instance.PlayerCount < GameOptionsData.MaxImpostors.Length)
-            {
-                num = GameOptionsData.MaxImpostors[GameData.Instance.PlayerCount];
-                if (num <= 0)
-                {
-                    num = 1;
-                }
+            // This is a bad way of doing it because it gets called too often. 
+            // TODO: Find another override!
+            value = 0;
+            if (optionName == Int32OptionNames.NumImpostors) {
+                Logger<PropHuntPlugin>.Info("Overriding number of impostors!");
+                    value = 1;
+                // if (PropHuntPlugin.isPropHunt && __instance.NumImpostors <= 0) {
+                    return false;
+                // }
             }
-            __result = Mathf.Clamp(numImpostors, 1, num);
-            return false;
+            return true;
+        }
+
+        // Disable the validation check for maximum impostors
+        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.Validate))]
+        [HarmonyPrefix]
+        public static bool DisableMinImpValidation(GameOptionsData __instance, ref bool __result) 
+        {
+            if (PropHuntPlugin.isPropHunt) {
+                __result = false;
+                return false;
+            }
+            return true;
         }
 
 
@@ -162,17 +168,17 @@ namespace PropHunt
             __instance.MinPlayers = 2;
         }
 
-        // Disable a lot of stuff
-        [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CmdReportDeadBody))]
-        [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowSabotageMap))]
-        [HarmonyPatch(typeof(Vent), nameof(Vent.Use))]
-        [HarmonyPatch(typeof(Vent), nameof(Vent.SetOutline))]
-        [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowCountOverlay))]
-        [HarmonyPrefix]
-        public static bool DisableFunctions()
-        {
-            return false;
-        }
+        // Disable a lot of stuff (not needed anymore bcause of hidenseek)
+        // [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CmdReportDeadBody))]
+        // [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowSabotageMap))]
+        // [HarmonyPatch(typeof(Vent), nameof(Vent.Use))]
+        // [HarmonyPatch(typeof(Vent), nameof(Vent.SetOutline))]
+        // [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowCountOverlay))]
+        // [HarmonyPrefix]
+        // public static bool DisableFunctions()
+        // {
+        //     return false;
+        // }
 
         [HarmonyPatch(typeof(ShadowCollab), nameof(ShadowCollab.OnEnable))]
         [HarmonyPrefix]
@@ -187,56 +193,15 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void IntroCuscenePatch()
         {
-            PropHuntPlugin.missedKills = 0;
-            if (PlayerControl.LocalPlayer.Data.Role.IsImpostor)
-            {
-                foreach (SpriteRenderer rend in PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>())
-                {
-                    rend.sortingOrder += 5;
-                }
-            }
-            HudManager hud = DestroyableSingleton<HudManager>.Instance;
-            hud.ImpostorVentButton.gameObject.SetActiveRecursively(false);
-            hud.SabotageButton.gameObject.SetActiveRecursively(false);
-            hud.ReportButton.gameObject.SetActiveRecursively(false);
-            hud.Chat.SetVisible(true);
-            Logger<PropHuntPlugin>.Info(PropHuntPlugin.hidingTime + " -- " + PropHuntPlugin.maxMissedKills);
+
+            // if (PlayerControl.LocalPlayer.Data.Role.IsImpostor)
+            // {
+            //     foreach (SpriteRenderer rend in PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>())
+            //     {
+            //         rend.sortingOrder += 5;
+            //     }
+            // }
+            DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
         }
-
-        // Change the role text
-        [HarmonyPatch(typeof(IntroCutscene._ShowRole_d__24), nameof(IntroCutscene._ShowRole_d__24.MoveNext))]
-        [HarmonyPostfix]
-        public static void IntroCutsceneRolePatch(IntroCutscene._ShowRole_d__24 __instance)
-        {
-            // IEnumerator hooking (help from @Daemon#6489 in the reactor discord)
-            if (__instance.__1__state == 1)
-            {
-                if (PlayerControl.LocalPlayer.Data.Role.IsImpostor)
-                {
-                    __instance.__4__this.RoleText.text = "Seeker";
-                    __instance.__4__this.RoleBlurbText.text = "Find and kill the props\nYour game will be unfrozen after " + PropHuntPlugin.hidingTime + " seconds";
-                }
-                else
-                {
-                    __instance.__4__this.RoleText.text = "Prop";
-                    __instance.__4__this.RoleBlurbText.text = "Turn into props to hide from the seekers";
-                }
-            }
-        }
-
-        // Extend the intro cutscene for impostors
-        [HarmonyPatch(typeof(IntroCutscene._CoBegin_d__19), nameof(IntroCutscene._CoBegin_d__19.MoveNext))]
-        [HarmonyPrefix]
-        public static bool IntroCutsceneCoBeginPatch(IntroCutscene._CoBegin_d__19 __instance)
-        {
-            if (__instance.__1__state != 2 || !PlayerControl.LocalPlayer.Data.Role.IsImpostor)
-            {
-                return true;
-            }
-            Coroutines.Start(PropHuntPlugin.Utility.IntroCutsceneHidePatch(__instance.__4__this));
-            return false;
-        }
-
-
     }
 }

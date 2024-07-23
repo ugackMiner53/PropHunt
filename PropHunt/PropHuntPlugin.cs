@@ -30,6 +30,7 @@ public partial class PropHuntPlugin : BasePlugin
     // Gameplay Variables
     public static float missTimePenalty = 10f;
     public static bool infection = false;
+    public static bool isPropHunt = true;
 
     public static PropHuntPlugin Instance;
 
@@ -40,7 +41,7 @@ public partial class PropHuntPlugin : BasePlugin
         MissTimePenalty = Config.Bind("Prop Hunt", "Miss Penalty", 10f);
         Infection = Config.Bind("Prop Hunt", "Infection", false);
 
-        // Harmony.PatchAll(typeof(Patches));
+        Harmony.PatchAll(typeof(Patches));
         // Harmony.PatchAll(typeof(CustomRoleSettings));
     }
 

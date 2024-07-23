@@ -20,7 +20,7 @@ public static class Utility
                 }
             }
         }
-        return bestCollider.gameObject;
+        return bestCollider ? bestCollider.gameObject : null;
     }
 
     public static System.Collections.IEnumerator KillConsoleAnimation()
