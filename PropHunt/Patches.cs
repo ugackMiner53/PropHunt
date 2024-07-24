@@ -95,11 +95,6 @@ namespace PropHunt
             propObj.transform.localPosition = new Vector3(0, 0, -15);
             propObj.transform.localScale = Vector2.one;
             PropManager.playerToProp.Add(__instance, propRenderer);
-
-            // Put the impostor in front of all other objects
-            if (__instance.Data.Role.IsImpostor) {
-                __instance.transform.position = new Vector3(__instance.transform.position.x, __instance.transform.position.y, -30);
-            }
         }
 
 
@@ -114,6 +109,11 @@ namespace PropHunt
             if (__instance.myPlayer.Visible && !__instance.myPlayer.Data.Role.IsImpostor && !__instance.myPlayer.Data.IsDead && PropManager.playerToProp.ContainsKey(__instance.myPlayer) && PropManager.playerToProp[__instance.myPlayer].sprite != null)
             {
                 __instance.myPlayer.Visible = false;
+            }
+
+            // Put the impostor in front of all other objects
+            if (PlayerControl.LocalPlayer.Data.Role.IsImpostor) {
+                PlayerControl.LocalPlayer.transform.position = new Vector3(PlayerControl.LocalPlayer.transform.position.x, PlayerControl.LocalPlayer.transform.position.y, -30);
             }
         }
 
@@ -167,29 +167,52 @@ namespace PropHunt
         }
 
         // Make the game start with AT LEAST one impostor (happens if there are >4 players)
-        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.TryGetInt))]
-        [HarmonyPrefix]
-        public static bool ForceNotZeroImps(GameOptionsData __instance, Int32OptionNames optionName, out int value)
+        // [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.TryGetInt))]
+        // [HarmonyPrefix]
+        // public static bool ForceNotZeroImps(GameOptionsData __instance, Int32OptionNames optionName, out int value)
+        // {
+        //     // This is a bad way of doing it because it gets called too often. 
+        //     // TODO: Find another override!
+        //     value = 0;
+        //     if (optionName == Int32OptionNames.NumImpostors) {
+        //         Logger<PropHuntPlugin>.Info("Overriding number of impostors!");
+        //             value = 1;
+        //         // if (PropHuntPlugin.isPropHunt && __instance.NumImpostors <= 0) {
+        //             return false;
+        //         // }
+        //     }
+        //     return true;
+        // }
+
+        [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
+        [HarmonyPostfix]
+        public static void MinPlayerPatch(GameStartManager __instance)
         {
-            // This is a bad way of doing it because it gets called too often. 
-            // TODO: Find another override!
-            value = 0;
-            if (optionName == Int32OptionNames.NumImpostors) {
-                Logger<PropHuntPlugin>.Info("Overriding number of impostors!");
-                    value = 1;
-                // if (PropHuntPlugin.isPropHunt && __instance.NumImpostors <= 0) {
-                    return false;
-                // }
+            if (PropHuntPlugin.isPropHunt) {
+                __instance.MinPlayers = 2;
+            } else {
+                __instance.MinPlayers = 4;
             }
-            return true;
+        }
+
+        [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.GetAdjustedNumImpostors))]
+        [HarmonyPostfix]
+        public static void PreventZeroImpPatch(ref int __result) 
+        {
+            if (__result <= 0) {
+                __result = 1;
+            }
         }
 
         [HarmonyPatch(typeof(ShadowCollab), nameof(ShadowCollab.OnEnable))]
         [HarmonyPrefix]
         public static bool DisableShadows(ShadowCollab __instance)
         {
-            __instance.ShadowQuad.gameObject.SetActive(false);
-            return false;
+            if (PropHuntPlugin.isPropHunt) {
+                __instance.ShadowQuad.gameObject.SetActive(false);
+                return false;
+            }
+            return true;
         }
 
         // Reset variables on game start
@@ -197,7 +220,9 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void IntroCuscenePatch()
         {
-            DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
+            if (PropHuntPlugin.isPropHunt) {
+                DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
+            }
         }
     }
 }
