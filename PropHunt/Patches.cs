@@ -6,6 +6,7 @@ using UnityEngine;
 using Reactor.Utilities;
 using AmongUs.GameOptions;
 using Reactor.Utilities.Extensions;
+using System.ComponentModel;
 
 namespace PropHunt
 {
@@ -94,6 +95,11 @@ namespace PropHunt
             propObj.transform.localPosition = new Vector3(0, 0, -15);
             propObj.transform.localScale = Vector2.one;
             PropManager.playerToProp.Add(__instance, propRenderer);
+
+            // Put the impostor in front of all other objects
+            if (__instance.Data.Role.IsImpostor) {
+                __instance.transform.position = new Vector3(__instance.transform.position.x, __instance.transform.position.y, -30);
+            }
         }
 
 
@@ -102,10 +108,10 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void PlayerPhysicsAnimationPatch(PlayerPhysics __instance)
         {
-            if (!AmongUsClient.Instance.IsGameStarted || !PropHuntPlugin.isPropHunt)
+            if (!AmongUsClient.Instance.IsGameStarted || !PropHuntPlugin.isPropHunt || __instance.myPlayer == null)
                 return;
 
-            if (__instance.myPlayer.Visible && !__instance.myPlayer.Data.Role.IsImpostor && !__instance.myPlayer.Data.IsDead)
+            if (__instance.myPlayer.Visible && !__instance.myPlayer.Data.Role.IsImpostor && !__instance.myPlayer.Data.IsDead && PropManager.playerToProp.ContainsKey(__instance.myPlayer) && PropManager.playerToProp[__instance.myPlayer].sprite != null)
             {
                 __instance.myPlayer.Visible = false;
             }
@@ -124,15 +130,6 @@ namespace PropHunt
                 Logger<PropHuntPlugin>.Info("Removing Prop Lol!");
                 prop.gameObject.Destroy();
                 PropManager.playerToProp.Remove(__instance);
-            }
-
-            if (PropHuntPlugin.infection)
-            {
-                __instance.Data.Role.TeamType = RoleTeamTypes.Impostor;
-                DestroyableSingleton<RoleManager>.Instance.SetRole(__instance, AmongUs.GameOptions.RoleTypes.Impostor);
-                __instance.Revive();
-                __instance.transform.position = new Vector3(__instance.transform.position.x, __instance.transform.position.y, -30);
-                __instance.Visible = true;
             }
         }
 

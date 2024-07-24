@@ -53,13 +53,11 @@ public static class RPCHandler
     public static void RPCSettingSync(PlayerControl player, float _missTimePenalty, bool _infection)
     {
         PropHuntPlugin.missTimePenalty = _missTimePenalty;
-        PropHuntPlugin.infection = _infection;
         // Logger<PropHuntPlugin>.Info("H: " + PropHuntPlugin.hidingTime + ", M: " + PropHuntPlugin.maxMissedKills + ", I: " + PropHuntPlugin.infection);
-        Logger<PropHuntPlugin>.Info($"MissTimePenalty {PropHuntPlugin.missTimePenalty}, Infection {PropHuntPlugin.infection}");
-        if (player == PlayerControl.LocalPlayer && (PropHuntPlugin.missTimePenalty != PropHuntPlugin.Instance.MissTimePenalty.Value || PropHuntPlugin.infection != PropHuntPlugin.Instance.Infection.Value))
+        Logger<PropHuntPlugin>.Info($"MissTimePenalty {PropHuntPlugin.missTimePenalty}");
+        if (player == PlayerControl.LocalPlayer && (PropHuntPlugin.missTimePenalty != PropHuntPlugin.Instance.MissTimePenalty.Value))
         {
             PropHuntPlugin.Instance.MissTimePenalty.Value = PropHuntPlugin.missTimePenalty;
-            PropHuntPlugin.Instance.Infection.Value = PropHuntPlugin.infection;
             PropHuntPlugin.Instance.Config.Save();
         }
     }
