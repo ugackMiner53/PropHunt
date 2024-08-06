@@ -89,19 +89,27 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void PlayerControlStartPatch(PlayerControl __instance)
         {
+
+            // Move everything else up
+            SpriteRenderer[] impostorRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
+            foreach (SpriteRenderer renderer in impostorRenderers) {
+                renderer.sortingOrder = 30;
+            }
+
+            // Move prop sprite down
             GameObject propObj = new GameObject("Prop");
             SpriteRenderer propRenderer = propObj.AddComponent<SpriteRenderer>();
+            propRenderer.sortingOrder = 15;
             propObj.transform.SetParent(__instance.transform);
-            propObj.transform.localPosition = new Vector3(0, 0, -15);
             propObj.transform.localScale = Vector2.one;
             PropManager.playerToProp.Add(__instance, propRenderer);
         }
 
 
         // Runs periodically, resets animation data for players
-        [HarmonyPatch(typeof(PlayerPhysics), "HandleAnimation")]
+        [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.ResetAnimState))]
         [HarmonyPostfix]
-        public static void PlayerPhysicsAnimationPatch(PlayerPhysics __instance)
+        public static void PlayerPhysicsResetAnimationPatch(PlayerPhysics __instance)
         {
             if (!AmongUsClient.Instance.IsGameStarted || !PropHuntPlugin.isPropHunt || __instance.myPlayer == null)
                 return;
@@ -109,11 +117,6 @@ namespace PropHunt
             if (__instance.myPlayer.Visible && !__instance.myPlayer.Data.Role.IsImpostor && !__instance.myPlayer.Data.IsDead && PropManager.playerToProp.ContainsKey(__instance.myPlayer) && PropManager.playerToProp[__instance.myPlayer].sprite != null)
             {
                 __instance.myPlayer.Visible = false;
-            }
-
-            // Put the impostor in front of all other objects
-            if (PlayerControl.LocalPlayer.Data.Role.IsImpostor) {
-                PlayerControl.LocalPlayer.transform.position = new Vector3(PlayerControl.LocalPlayer.transform.position.x, PlayerControl.LocalPlayer.transform.position.y, -30);
             }
         }
 
