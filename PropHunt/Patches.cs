@@ -207,24 +207,45 @@ namespace PropHunt
             }
         }
 
-        [HarmonyPatch(typeof(ShadowCollab), nameof(ShadowCollab.OnEnable))]
-        [HarmonyPrefix]
-        public static bool DisableShadows(ShadowCollab __instance)
-        {
-            if (PropHuntPlugin.isPropHunt) {
-                __instance.ShadowQuad.gameObject.SetActive(false);
-                return false;
-            }
-            return true;
-        }
-
-        // Reset variables on game start
+        // Set components on game start
         [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.CoBegin))]
         [HarmonyPostfix]
         public static void IntroCuscenePatch()
         {
+            ShadowCollab shadowCollab = Object.FindObjectOfType<ShadowCollab>();
             if (PropHuntPlugin.isPropHunt) {
+
+                // Move player layers up
+                SpriteRenderer[] impostorRenderers = PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (SpriteRenderer renderer in impostorRenderers) {
+                    renderer.sortingOrder = 3;
+                }
+
+                // Change visibility through walls for impostors & props
+                if (PlayerControl.LocalPlayer.Data.Role.IsImpostor) {
+                    shadowCollab.ShadowQuad.material.color = new Color(0, 0, 0, 1);
+                    shadowCollab.ShadowQuad.sortingOrder = 5;
+                    shadowCollab.ShadowQuad.gameObject.SetActive(true);
+                } else {
+                    shadowCollab.ShadowQuad.gameObject.SetActive(false);
+                }
+
+                // Enable the chat
                 DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
+
+            } else {
+
+                // Reset player layers
+                SpriteRenderer[] renderers = PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (SpriteRenderer renderer in renderers) {
+                    renderer.sortingOrder = 0;
+                }
+
+                // Reset shadow patches
+                shadowCollab.ShadowQuad.gameObject.SetActive(true);
+                shadowCollab.ShadowQuad.material.color = new Color(0.2745f, 0.2745f, 0.2745f, 1);
+                shadowCollab.ShadowQuad.sortingOrder = 0;
+                
             }
         }
     }

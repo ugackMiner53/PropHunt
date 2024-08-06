@@ -52,11 +52,6 @@ public partial class PropHuntPlugin : BasePlugin
         Harmony.PatchAll(typeof(Patches));
         // Harmony.PatchAll(typeof(CustomRoleSettings));
 
-
-        // Resources.Load()
-        
-        // ImageConversion.LoadImage()
-        // TryLoadTestTexture();
         Texture2D texture = LoadTextureFromPath("PropHunt.Resources.PropHuntPortrait.png");
         prophuntportraitTest = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
         prophuntportraitTest.hideFlags |= HideFlags.HideAndDontSave | HideFlags.DontSaveInEditor;

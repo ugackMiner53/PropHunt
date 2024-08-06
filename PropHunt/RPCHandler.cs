@@ -24,7 +24,7 @@ public static class RPCHandler
 
         SpriteRenderer propRenderer = PropManager.playerToProp[player];
         propRenderer.transform.localScale = prop.transform.lossyScale * 1.429f;
-        propRenderer.transform.localPosition = new Vector3(0, 0, -15);
+        propRenderer.transform.localPosition = new Vector3(0, 0, 0);
         propRenderer.sprite = prop.GetComponent<SpriteRenderer>().sprite;
         player.Visible = false;
     }
@@ -32,7 +32,7 @@ public static class RPCHandler
     [MethodRpc((uint)RPC.PropPos)]
     public static void RPCPropPos(PlayerControl player, Vector2 position) 
     {
-        PropManager.playerToProp[player].transform.localPosition = new Vector3(position.x, position.y, -15);
+        PropManager.playerToProp[player].transform.localPosition = new Vector3(position.x, position.y, 0);
     }
 
     [MethodRpc((uint)RPC.FailedKill)]
