@@ -1,17 +1,17 @@
 // Patches for PropHuntPlugin
-// Copyright (C) 2022  ugackMiner
+// Copyright (C) 2024 ugackMiner
+
 using HarmonyLib;
 using Reactor;
 using UnityEngine;
 using Reactor.Utilities;
-using AmongUs.GameOptions;
 using Reactor.Utilities.Extensions;
-using System.ComponentModel;
 
 namespace PropHunt
 {
     public class Patches
     {
+
         // Main input loop for custom keys
         [HarmonyPatch(typeof(KeyboardJoystick), nameof(KeyboardJoystick.Update))]
         [HarmonyPrefix]
@@ -80,6 +80,7 @@ namespace PropHunt
             return true;
         }
 
+
         // Runs when the player is created
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.Start))]
         [HarmonyPostfix]
@@ -93,6 +94,7 @@ namespace PropHunt
             propObj.transform.localScale = Vector2.one;
             PropManager.playerToProp.Add(__instance, propRenderer);
         }
+
 
         // Reset PropManager prop map when leaving game
         [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.ExitGame))]
@@ -117,6 +119,7 @@ namespace PropHunt
             }
         }
 
+
         // Remove Prop on death & Make impostor if infection
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.Die))]
         [HarmonyPostfix]
@@ -133,6 +136,7 @@ namespace PropHunt
             }
         }
 
+
         // Make it so that the kill button doesn't light up when near a player
         [HarmonyPatch(typeof(KillButton), nameof(KillButton.SetTarget))]
         [HarmonyPostfix]
@@ -142,6 +146,7 @@ namespace PropHunt
                 __instance.SetEnabled();
             }
         }
+
 
         // Make impostor able to kill invisible players
         [HarmonyPatch(typeof(ImpostorRole), nameof(ImpostorRole.IsValidTarget))]
@@ -155,6 +160,7 @@ namespace PropHunt
             return true;
         }
 
+
         // Penalize the impostor if there is no prop killed
         [HarmonyPatch(typeof(KillButton), nameof(KillButton.DoClick))]
         [HarmonyPrefix]
@@ -167,17 +173,15 @@ namespace PropHunt
             }
         }
 
+
         // Allow the game to start with < 2 players
         [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
         [HarmonyPostfix]
         public static void MinPlayerPatch(GameStartManager __instance)
         {
-            if (PropHuntPlugin.isPropHunt) {
-                __instance.MinPlayers = 2;
-            } else {
-                __instance.MinPlayers = 4;
-            }
+            __instance.MinPlayers = PropHuntPlugin.isPropHunt ? 2 : 4;
         }
+
 
         // Prevent game from not having an impostor with < 2 players
         [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.GetAdjustedNumImpostors))]
@@ -188,6 +192,7 @@ namespace PropHunt
                 __result = 1;
             }
         }
+
 
         // Set components on game start
         [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.CoBegin))]
@@ -230,5 +235,6 @@ namespace PropHunt
                 
             }
         }
+    
     }
 }

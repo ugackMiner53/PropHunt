@@ -1,3 +1,8 @@
+using System;
+using System.IO;
+using System.Reflection;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Reactor.Utilities;
 using UnityEngine;
 
 namespace PropHunt;
@@ -34,5 +39,22 @@ public static class Utility
             HudManager.Instance.FullScreen.gameObject.SetActive(false);
         }
         yield break;
+    }
+
+    public static unsafe Texture2D LoadTextureFromPath(string path) 
+    {
+        try {
+            Texture2D texture = new(2, 2, TextureFormat.ARGB32, true); //CanvasUtilities.CreateEmptyTexture(2, 2);
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path);
+            long length = stream.Length;
+            Il2CppStructArray<byte> textureBytes = new Il2CppStructArray<byte>(length);
+            stream.Read(new Span<byte>(IntPtr.Add(textureBytes.Pointer, IntPtr.Size * 4).ToPointer(), (int)length));
+            ImageConversion.LoadImage(texture, textureBytes, false);
+            Logger<PropHuntPlugin>.Info("Correctly loaded " + path);
+            return texture;
+        } catch {
+            Logger<PropHuntPlugin>.Error("Failed loading " + path);
+        }
+        return null;
     }
 }

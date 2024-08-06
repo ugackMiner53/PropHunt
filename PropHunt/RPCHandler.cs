@@ -50,15 +50,22 @@ public static class RPCHandler
     }
 
     [MethodRpc((uint)RPC.SettingSync)]
-    public static void RPCSettingSync(PlayerControl player, float _missTimePenalty, bool _infection)
+    public static void RPCSettingSync(PlayerControl player, bool _isPropHunt, float _missTimePenalty, bool _infection)
     {
+        PropHuntPlugin.isPropHunt = _isPropHunt;
         PropHuntPlugin.missTimePenalty = _missTimePenalty;
-        // Logger<PropHuntPlugin>.Info("H: " + PropHuntPlugin.hidingTime + ", M: " + PropHuntPlugin.maxMissedKills + ", I: " + PropHuntPlugin.infection);
+        Logger<PropHuntPlugin>.Info($"IsPropHunt {PropHuntPlugin.isPropHunt}");
         Logger<PropHuntPlugin>.Info($"MissTimePenalty {PropHuntPlugin.missTimePenalty}");
-        if (player == PlayerControl.LocalPlayer && (PropHuntPlugin.missTimePenalty != PropHuntPlugin.Instance.MissTimePenalty.Value))
+        if (player == PlayerControl.LocalPlayer && (PropHuntPlugin.isPropHunt != PropHuntPlugin.Instance.IsPropHunt.Value || PropHuntPlugin.missTimePenalty != PropHuntPlugin.Instance.MissTimePenalty.Value))
         {
+            PropHuntPlugin.Instance.IsPropHunt.Value = PropHuntPlugin.isPropHunt;
             PropHuntPlugin.Instance.MissTimePenalty.Value = PropHuntPlugin.missTimePenalty;
             PropHuntPlugin.Instance.Config.Save();
+        }
+
+        // Change other variables based on prop hunt state
+        if (GameStartManager.InstanceExists) {
+            GameStartManager.Instance.MinPlayers = PropHuntPlugin.isPropHunt ? 2 : 4;
         }
     }
 }
