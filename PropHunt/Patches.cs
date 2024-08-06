@@ -21,7 +21,6 @@ namespace PropHunt
 
             if (!PropHuntPlugin.isPropHunt || player.Data.Role.IsImpostor || KeyboardJoystick.player == null) return true;
 
-            
             // Change Prop
             if (Input.GetKeyDown(KeyCode.R)) // KeyboardJoystick.player.GetButtonDown(49) for Use Ability keybind
             {
@@ -47,7 +46,6 @@ namespace PropHunt
                 if (Input.GetKey(KeyCode.LeftShift)) { // KeyboardJoystick.player.GetButton(7) for Report Button
                     // Disable default movement
                     __instance.del = Vector2.zero;
-
                     Vector2 inputDirection = new Vector2();
 
                     if (KeyboardJoystick.player.GetButton(40)) {
@@ -75,10 +73,8 @@ namespace PropHunt
 
                 } else if (Input.GetKeyUp(KeyCode.LeftShift)) { // KeyboardJoystick.player.GetButtonUp(7) for Report button
                     Transform prop = PropManager.playerToProp[player].transform;
-
                     RPCHandler.RPCPropPos(player, prop.localPosition);
                 }
-                
             }
 
             return true;
@@ -89,20 +85,21 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void PlayerControlStartPatch(PlayerControl __instance)
         {
-
-            // Move everything else up
-            SpriteRenderer[] impostorRenderers = __instance.GetComponentsInChildren<SpriteRenderer>(true);
-            foreach (SpriteRenderer renderer in impostorRenderers) {
-                renderer.sortingOrder = 30;
-            }
-
             // Move prop sprite down
             GameObject propObj = new GameObject("Prop");
             SpriteRenderer propRenderer = propObj.AddComponent<SpriteRenderer>();
-            propRenderer.sortingOrder = 15;
+            propRenderer.sortingOrder = 1;
             propObj.transform.SetParent(__instance.transform);
             propObj.transform.localScale = Vector2.one;
             PropManager.playerToProp.Add(__instance, propRenderer);
+        }
+
+        // Reset PropManager prop map when leaving game
+        [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.ExitGame))]
+        [HarmonyPostfix]
+        public static void OnExitGame() 
+        {
+            PropManager.playerToProp.Clear();
         }
 
 
@@ -137,12 +134,13 @@ namespace PropHunt
         }
 
         // Make it so that the kill button doesn't light up when near a player
-        [HarmonyPatch(typeof(VentButton), nameof(VentButton.SetTarget))]
         [HarmonyPatch(typeof(KillButton), nameof(KillButton.SetTarget))]
         [HarmonyPostfix]
         public static void KillButtonHighlightPatch(ActionButton __instance)
         {
-            __instance.SetEnabled();
+            if (PropHuntPlugin.isPropHunt) {
+                __instance.SetEnabled();
+            }
         }
 
         // Make impostor able to kill invisible players
@@ -169,24 +167,7 @@ namespace PropHunt
             }
         }
 
-        // Make the game start with AT LEAST one impostor (happens if there are >4 players)
-        // [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.TryGetInt))]
-        // [HarmonyPrefix]
-        // public static bool ForceNotZeroImps(GameOptionsData __instance, Int32OptionNames optionName, out int value)
-        // {
-        //     // This is a bad way of doing it because it gets called too often. 
-        //     // TODO: Find another override!
-        //     value = 0;
-        //     if (optionName == Int32OptionNames.NumImpostors) {
-        //         Logger<PropHuntPlugin>.Info("Overriding number of impostors!");
-        //             value = 1;
-        //         // if (PropHuntPlugin.isPropHunt && __instance.NumImpostors <= 0) {
-        //             return false;
-        //         // }
-        //     }
-        //     return true;
-        // }
-
+        // Allow the game to start with < 2 players
         [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
         [HarmonyPostfix]
         public static void MinPlayerPatch(GameStartManager __instance)
@@ -198,6 +179,7 @@ namespace PropHunt
             }
         }
 
+        // Prevent game from not having an impostor with < 2 players
         [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.GetAdjustedNumImpostors))]
         [HarmonyPostfix]
         public static void PreventZeroImpPatch(ref int __result) 
