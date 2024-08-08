@@ -42,7 +42,7 @@ public static class RPCHandler
         Logger<PropHuntPlugin>.Warning("RPC Failed Kill");
         GameManager.Instance.Cast<HideAndSeekManager>().LogicFlowHnS.AdjustEscapeTimer(PropHuntPlugin.missTimePenalty, true);
         Coroutines.Start(Utility.KillConsoleAnimation());
-        GameObject closestProp = Utility.FindClosestConsole(player.gameObject, GameOptionsManager.Instance.CurrentGameOptions.GetInt(Int32OptionNames.KillDistance));
+        GameObject closestProp = Utility.FindClosestConsole(player.gameObject, GameOptionsManager.Instance.CurrentGameOptions.GetInt(Int32OptionNames.KillDistance) + 5);
         if (closestProp != null)
         {
             GameObject.Destroy(closestProp.gameObject);

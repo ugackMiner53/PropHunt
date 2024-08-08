@@ -147,12 +147,16 @@ namespace PropHunt.Settings
                 *   - Lower Final Time
                 *   - Longer Hiding Time
                 *   - Larger impostor vision radius
+                *   - 10s of time penalty
+                *   - Impostor cannot see through walls
                 */
 
                 __instance.SeekerPings = false;
                 __instance.SeekerFinalMap = false;
                 __instance.FinalCountdownTime = 30f;
                 __instance.EscapeTime = 240f;
+                __instance.ImpostorFlashlightSize = 0.5f;
+                __instance.ImpostorLightMod = 1;
                 RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, true, 10f, false);
             } else {
                 RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, false, 10f, false);
