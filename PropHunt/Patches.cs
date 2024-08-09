@@ -137,6 +137,17 @@ namespace PropHunt
         }
 
 
+        // Prevent seeker admin map from appearing when there's 1 player left if the final map setting is off
+        [HarmonyPatch(typeof(LogicGameFlowHnS), nameof(LogicGameFlowHnS.SeekerAdminMapEnabled))]
+        [HarmonyPostfix]
+        static void SeekerAdminMapEnabledPatch(LogicGameFlowHnS __instance, PlayerControl player, ref bool __result) 
+        {
+            if (PropHuntPlugin.isPropHunt && !__instance.hideAndSeekManager.LogicOptionsHnS.GetSeekerFinalMap()) {
+                __result = false;
+            }
+        }
+
+
         // Make it so that the kill button doesn't light up when near a player
         [HarmonyPatch(typeof(KillButton), nameof(KillButton.SetTarget))]
         [HarmonyPostfix]
