@@ -62,7 +62,7 @@ namespace PropHunt
                     }
 
                     Transform prop = PropManager.playerToProp[player].transform;
-                    Vector3 newPosition = new Vector3(prop.localPosition.x + inputDirection.x * PropHuntPlugin.propMoveSpeed * Time.deltaTime, prop.localPosition.y + inputDirection.y * PropHuntPlugin.propMoveSpeed * Time.deltaTime, -15);
+                    Vector3 newPosition = new Vector3(prop.localPosition.x + inputDirection.x * PropHuntPlugin.propMoveSpeed * Time.deltaTime, prop.localPosition.y + inputDirection.y * PropHuntPlugin.propMoveSpeed * Time.deltaTime, -3);
 
                     // Limit position to within kill distance
                     if (Vector2.Distance(Vector2.zero, newPosition) < PropHuntPlugin.maxPropDistance) {
@@ -87,11 +87,13 @@ namespace PropHunt
         public static void PlayerControlStartPatch(PlayerControl __instance)
         {
             // Move prop sprite down
-            GameObject propObj = new GameObject("Prop");
+            GameObject propObj = new GameObject("Prop") {
+                layer = 11
+            };
             SpriteRenderer propRenderer = propObj.AddComponent<SpriteRenderer>();
-            propRenderer.sortingOrder = 1;
             propObj.transform.SetParent(__instance.transform);
             propObj.transform.localScale = Vector2.one;
+            propObj.transform.localPosition = new Vector3(0, 0, -3);
             PropManager.playerToProp.Add(__instance, propRenderer);
         }
 
@@ -223,15 +225,15 @@ namespace PropHunt
             if (PropHuntPlugin.isPropHunt) {
 
                 // Move player layers up
-                SpriteRenderer[] impostorRenderers = PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>(true);
-                foreach (SpriteRenderer renderer in impostorRenderers) {
-                    renderer.sortingOrder = 3;
+                foreach (NetworkedPlayerInfo player in GameData.Instance.AllPlayers) 
+                {
+                    player.Object.transform.FindChild("BodyForms").localPosition = new Vector3(0, 0, -5);
+                    player.Object.transform.FindChild("Cosmetics").localPosition = new Vector3(0, 0, -5);
                 }
 
                 // Change visibility through walls for impostors & props
                 if (PlayerControl.LocalPlayer.Data.Role.IsImpostor) {
                     shadowCollab.ShadowQuad.material.color = new Color(0, 0, 0, 1);
-                    shadowCollab.ShadowQuad.sortingOrder = 5;
                     shadowCollab.ShadowQuad.gameObject.SetActive(true);
                 } else {
                     shadowCollab.ShadowQuad.gameObject.SetActive(false);
@@ -243,15 +245,15 @@ namespace PropHunt
             } else {
 
                 // Reset player layers
-                SpriteRenderer[] renderers = PlayerControl.LocalPlayer.GetComponentsInChildren<SpriteRenderer>(true);
-                foreach (SpriteRenderer renderer in renderers) {
-                    renderer.sortingOrder = 0;
+                foreach (NetworkedPlayerInfo player in GameData.Instance.AllPlayers) 
+                {
+                    player.Object.transform.FindChild("BodyForms").localPosition = new Vector3(0, 0, 0);
+                    player.Object.transform.FindChild("Cosmetics").localPosition = new Vector3(0, 0, 0);
                 }
 
                 // Reset shadow patches
                 shadowCollab.ShadowQuad.gameObject.SetActive(true);
                 shadowCollab.ShadowQuad.material.color = new Color(0.2745f, 0.2745f, 0.2745f, 1);
-                shadowCollab.ShadowQuad.sortingOrder = 0;
                 
             }
         }

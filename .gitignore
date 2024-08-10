@@ -1,5 +1,5 @@
-﻿PropHunt/bin/
-PropHunt/obj/
+﻿PropHunt/bin/**
+PropHunt/obj/**
 .github/
 .vs/
 .references/

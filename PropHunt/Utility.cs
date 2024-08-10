@@ -44,7 +44,7 @@ public static class Utility
     public static unsafe Texture2D LoadTextureFromPath(string path) 
     {
         try {
-            Texture2D texture = new(2, 2, TextureFormat.ARGB32, true); //CanvasUtilities.CreateEmptyTexture(2, 2);
+            Texture2D texture = new(2, 2, TextureFormat.ARGB32, true);
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path);
             long length = stream.Length;
             Il2CppStructArray<byte> textureBytes = new Il2CppStructArray<byte>(length);
