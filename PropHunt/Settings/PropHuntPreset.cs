@@ -155,7 +155,7 @@ namespace PropHunt.Settings
                 __instance.SeekerFinalMap = false;
                 __instance.FinalCountdownTime = 30f;
                 __instance.EscapeTime = 240f;
-                __instance.ImpostorFlashlightSize = 0.5f;
+                // __instance.ImpostorFlashlightSize = 0.5f;
                 __instance.ImpostorLightMod = 1;
                 RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, true, 10f, false);
             } else {

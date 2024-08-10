@@ -184,6 +184,15 @@ namespace PropHunt
             }
         }
 
+        
+        // Prevent clicking on players to kill them 
+        [HarmonyPatch(typeof(KillButton), nameof(KillButton.CheckClick))]
+        [HarmonyPrefix]
+        static bool KillButtonCheckClick(PlayerControl target)
+        {
+            return !PropHuntPlugin.isPropHunt;
+        }
+
 
         // Allow the game to start with < 2 players
         [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
