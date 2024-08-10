@@ -8,11 +8,10 @@ using HarmonyLib;
 using PropHunt.Settings;
 using Reactor;
 using Reactor.Utilities;
-using UnityEngine;
 
 namespace PropHunt;
 
-[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2024.8.6-dev")]
+[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v8.14.2024")]
 [BepInProcess("Among Us.exe")]
 [BepInDependency(ReactorPlugin.Id)]
 public partial class PropHuntPlugin : BasePlugin
@@ -33,7 +32,6 @@ public partial class PropHuntPlugin : BasePlugin
     public const float maxPropDistance = 0.6f;
 
     public static PropHuntPlugin Instance;
-
 
     public override void Load()
     {        

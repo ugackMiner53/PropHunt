@@ -2,7 +2,6 @@
 // Copyright (C) 2024 ugackMiner
 
 using HarmonyLib;
-using Reactor;
 using UnityEngine;
 using Reactor.Utilities;
 using Reactor.Utilities.Extensions;
