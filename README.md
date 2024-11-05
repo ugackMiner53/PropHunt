@@ -2,14 +2,14 @@
 
 ![Prop Hunt Logo](./Images/prophuntlogo.png)
 
-```Compatible with v2024.6.18s ```
+```Compatible with v2024.10.29 ```
 # Prop Hunt
 
 A mod for [Among Us](https://store.steampowered.com/app/945360/Among_Us/) which extends Hide and Seek into a new mode, Prop Hunt!
 
 
 ## How To Play
-Prop Hunt uses the same rules and basics as Hide and Seek. Simply create a Hide and Seek lobby and select the "Prop Hunt" gamemode, or customize the settings to your liking!
+Prop Hunt uses the same rules and basics as Hide and Seek. Simply create a Hide and Seek lobby and select the "Prop Hunt" preset, or customize the settings to your liking!
 
 ## Controls
 | Key | Effect |
