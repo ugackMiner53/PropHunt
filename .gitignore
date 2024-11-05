@@ -1,4 +1,6 @@
-﻿PropHunt/bin/**
+﻿PropHunt\bin\**
+PropHunt/bin/**
+PropHunt\obj\**
 PropHunt/obj/**
 .github/
 .vs/
