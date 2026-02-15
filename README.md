@@ -2,7 +2,7 @@
 
 ![Prop Hunt Logo](./Images/prophuntlogo.png)
 
-```Compatible with v2024.10.29 ```
+```Compatible with v2025.11.18 ```
 # Prop Hunt
 
 A mod for [Among Us](https://store.steampowered.com/app/945360/Among_Us/) which extends Hide and Seek into a new mode, Prop Hunt!
@@ -16,6 +16,7 @@ Prop Hunt uses the same rules and basics as Hide and Seek. Simply create a Hide 
 |-----|--------|
 | `R` | Turn into nearest task |
 | `Shift` | Move task |
+| `C` | Turn back into a crewmate |
 
 *Note: You may get stuck when moving the task. Move the task back down before moving again.*
 
