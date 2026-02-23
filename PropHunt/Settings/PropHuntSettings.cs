@@ -90,7 +90,7 @@ namespace PropHunt.Settings
             propHuntCheckbox.OptionName = propHuntBooleanName;
             propHuntCheckbox.Type = OptionTypes.Checkbox;
             propHuntCheckbox.name = "Prop Hunt";
-            allGameList.System_Collections_IList_Add(propHuntCheckbox);
+            allGameList.Add(propHuntCheckbox);
 
             FloatGameSetting timePenaltyFloat = ScriptableObject.CreateInstance<FloatGameSetting>();
             timePenaltyFloat.Title = timePenaltyStringName;
@@ -103,7 +103,7 @@ namespace PropHunt.Settings
             timePenaltyFloat.ZeroIsInfinity = false;
             timePenaltyFloat.ValidRange = new FloatRange(0, 60);
             timePenaltyFloat.Value = PropHuntPlugin.missTimePenalty;
-            allGameList.System_Collections_IList_Add(timePenaltyFloat);
+            allGameList.Add(timePenaltyFloat);
 
 
             propHuntCategory = new RulesCategory
@@ -112,7 +112,7 @@ namespace PropHunt.Settings
                 CategoryName = propHuntStringName
             };
 
-            __instance.HideAndSeekManagerPrefab.gameSettingsList.AllCategories.System_Collections_IList_Add(propHuntCategory);
+           __instance.HideAndSeekManagerPrefab.gameSettingsList.AllCategories.Add(propHuntCategory);
         }
     }
 }

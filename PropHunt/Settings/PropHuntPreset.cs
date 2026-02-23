@@ -81,12 +81,12 @@ namespace PropHunt.Settings
             presetButton.transform.localPosition = new Vector3(2.4f, -0.1f, 0);
 
             // Add interactivity to the prop button
-            presetButton.OnClick.AddListener((UnityAction)delegate {
+            presetButton.OnClick.AddListener(new System.Action(() => {
                 __instance.StandardPresetButton.SelectButton(false);
                 __instance.SecondPresetButton.SelectButton(false);
                 presetButton.SelectButton(true);
-                __instance.ClickPresetButton(propHuntRulePreset);
-            });
+                __instance.ClickPresetButton(propHuntRulePreset, false);
+            }));
 
             presetButton.OnMouseOver.AddListener((UnityAction)delegate {
                 __instance.PresetDescriptionText.text = propHuntDescription;
