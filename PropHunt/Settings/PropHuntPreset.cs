@@ -4,7 +4,6 @@ using AmongUs.GameOptions;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using Reactor.Localization.Utilities;
-using Reactor.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -135,9 +134,9 @@ namespace PropHunt.Settings
 
 
         // Set the correct recommendations when the prop preset is selected
-        [HarmonyPatch(typeof(HideNSeekGameOptionsV08), nameof(HideNSeekGameOptionsV08.SetRecommendations), [typeof(int), typeof(bool), typeof(RulesPresets)])]
+        [HarmonyPatch(typeof(HideNSeekGameOptionsV10), nameof(HideNSeekGameOptionsV10.SetRecommendations), [typeof(int), typeof(bool), typeof(RulesPresets)])]
         [HarmonyPostfix]
-        public static void SetRecommendations(HideNSeekGameOptionsV08 __instance, int numPlayers, bool isOnline, RulesPresets rulesPresets) 
+        public static void SetRecommendations(HideNSeekGameOptionsV10 __instance, int numPlayers, bool isOnline, RulesPresets rulesPresets) 
         {
             if (rulesPresets == propHuntRulePreset) 
             {

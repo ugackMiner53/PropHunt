@@ -4,7 +4,6 @@ using AmongUs.GameOptions;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using Reactor.Localization.Utilities;
-using Reactor.Utilities;
 using UnityEngine;
 
 namespace PropHunt.Settings 
@@ -54,9 +53,9 @@ namespace PropHunt.Settings
         }
 
         // Overrides booleans being set
-        [HarmonyPatch(typeof(HideNSeekGameOptionsV08), nameof(HideNSeekGameOptionsV08.SetBool))]
+        [HarmonyPatch(typeof(HideNSeekGameOptionsV10), nameof(HideNSeekGameOptionsV10.SetBool))]
         [HarmonyPrefix]
-        static bool SetBoolPatch(HideNSeekGameOptionsV08 __instance, BoolOptionNames optionName, bool value) 
+        static bool SetBoolPatch(HideNSeekGameOptionsV10 __instance, BoolOptionNames optionName, bool value) 
         {
             if (optionName == propHuntBooleanName) {
                 RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, value, PropHuntPlugin.missTimePenalty, PropHuntPlugin.infection);
@@ -66,9 +65,9 @@ namespace PropHunt.Settings
         }
 
         // Overrides floats being set
-        [HarmonyPatch(typeof(HideNSeekGameOptionsV08), nameof(HideNSeekGameOptionsV08.SetFloat))]
+        [HarmonyPatch(typeof(HideNSeekGameOptionsV10), nameof(HideNSeekGameOptionsV10.SetFloat))]
         [HarmonyPrefix]
-        static bool SetFloatPatch(HideNSeekGameOptionsV08 __instance, FloatOptionNames optionName, float value) 
+        static bool SetFloatPatch(HideNSeekGameOptionsV10 __instance, FloatOptionNames optionName, float value) 
         {
             if (optionName == timePenaltyFloatName) {
                 RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, PropHuntPlugin.isPropHunt, value, PropHuntPlugin.infection);
@@ -112,7 +111,10 @@ namespace PropHunt.Settings
                 CategoryName = propHuntStringName
             };
 
-           __instance.HideAndSeekManagerPrefab.gameSettingsList.AllCategories.Add(propHuntCategory);
+            // This is marked as dynamic because we need System_Collections_IList_Add for the settings
+            // to actually be added, but it only exists at runtime for some reason.
+            dynamic AllCategories = __instance.HideAndSeekManagerPrefab.gameSettingsList.AllCategories;
+            AllCategories.System_Collections_IList_Add(propHuntCategory);
         }
     }
 }

@@ -128,7 +128,6 @@ namespace PropHunt
             SpriteRenderer prop = PropManager.playerToProp[__instance];
             if (prop != null) 
             {
-                Logger<PropHuntPlugin>.Info("Removing Prop Lol!");
                 prop.gameObject.Destroy();
                 PropManager.playerToProp.Remove(__instance);
             }

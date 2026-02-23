@@ -5,7 +5,7 @@
         <DebugType>embedded</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <VersionPrefix>2026.2.15</VersionPrefix>
+        <VersionPrefix>2026.2.23</VersionPrefix>
         <VersionSuffix>dev</VersionSuffix>
         <Description>Prop Hunt Mod</Description>
         <Authors>ugackMiner</Authors>
@@ -13,8 +13,8 @@
 
     <PropertyGroup>
         <GamePlatform Condition="'$(GamePlatform)' == ''">Steam</GamePlatform>
-        <GameVersion Condition="'$(GamePlatform)' == 'Steam'">2025.11.18</GameVersion>
-        <GameVersion Condition="'$(GamePlatform)' == 'Itch'">2025.11.18</GameVersion>
+        <GameVersion Condition="'$(GamePlatform)' == 'Steam'">2026.2.24</GameVersion>
+        <GameVersion Condition="'$(GamePlatform)' == 'Itch'">2026.2.24</GameVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,7 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Deobfuscate Include="../.references/Assembly-CSharp-2025.11.18.dll" />
+        <Deobfuscate Include="../.references/Assembly-CSharp-2026.2.24.dll" />
 
         <!-- <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="0.3.0" /> -->
     </ItemGroup>
