@@ -10,6 +10,7 @@ using UnityEngine.Events;
 
 namespace PropHunt.Settings
 {
+    [HarmonyPatch]
     class PropHuntPreset 
     {
         static StringNames presetStringName = CustomStringName.CreateAndRegister("Prop Hunt");
@@ -26,10 +27,8 @@ namespace PropHunt.Settings
             propHuntRulePreset = (RulesPresets)Enum.GetValues<RulesPresets>().Length;
             EnumInjector.InjectEnumValues<RulesPresets>(new Dictionary<string, object>{{"PropHunt", propHuntRulePreset}});
 
-            // Load Preset texture
-            Texture2D texture = Utility.LoadTextureFromPath("PropHunt.Resources.PropHuntPortrait.png");
-            presetPortraitSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
-            presetPortraitSprite.hideFlags |= HideFlags.HideAndDontSave | HideFlags.DontSaveInEditor;
+            // Load Preset sprie
+            presetPortraitSprite = Utility.LoadSprite("PropHunt.Resources.PropHuntPortrait.png", 100f);
         }
 
 
@@ -156,9 +155,9 @@ namespace PropHunt.Settings
                 __instance.EscapeTime = 240f;
                 // __instance.ImpostorFlashlightSize = 0.5f;
                 __instance.ImpostorLightMod = 1;
-                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, true, 10f, false);
+                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, true, 10f, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown);
             } else {
-                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, false, 10f, false);
+                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, false, 10f, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown);
             }
         }
 

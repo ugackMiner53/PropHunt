@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -56,5 +57,23 @@ public static class Utility
             Logger<PropHuntPlugin>.Error("Failed loading " + path);
         }
         return null;
+    }
+
+    public static readonly Dictionary<string, Sprite> _spriteCache = new();
+    public static Sprite LoadSprite(string path, float ppu)
+    {
+        if (_spriteCache.TryGetValue(path, out var c)) return c;
+        try
+        {
+            var s = Assembly.GetExecutingAssembly().GetManifestResourceStream(path);
+            if (s == null) return null;
+            var t = new Texture2D(0, 0, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            using var m = new System.IO.MemoryStream(); s.CopyTo(m);
+            t.LoadImage(m.ToArray(), false);
+            var sp = Sprite.Create(t, new Rect(0, 0, t.width, t.height), new Vector2(0.5f, 0.5f), ppu);
+            sp.hideFlags |= HideFlags.HideAndDontSave | HideFlags.DontSaveInEditor;
+            _spriteCache[path] = sp; return sp;
+        }
+        catch { return null; }
     }
 }

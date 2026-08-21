@@ -11,7 +11,7 @@ using Reactor.Utilities;
 
 namespace PropHunt;
 
-[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2026.2.23")]
+[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2026.8.20")]
 [BepInProcess("Among Us.exe")]
 [BepInDependency(ReactorPlugin.Id)]
 public partial class PropHuntPlugin : BasePlugin
@@ -20,12 +20,14 @@ public partial class PropHuntPlugin : BasePlugin
     public Harmony Harmony { get; } = new("com.ugackminer.amongus.prophunt");
     public ConfigEntry<bool> IsPropHunt { get; private set; }
     public ConfigEntry<float> MissTimePenalty { get; private set; }
-    public ConfigEntry<bool> Infection { get; private set; }
+    public ConfigEntry<float> DisguiseRange { get; private set; }
+    public ConfigEntry<float> DisguiseCooldown { get; private set; }
 
     // Gameplay Variables
     public static bool isPropHunt = true;
     public static float missTimePenalty = 10f;
-    public static bool infection = false;
+    public static float disguiseRange = 1.5f;
+    public static float disguiseCooldown = 5f;
     
     // Constants
     public const float propMoveSpeed = 0.5f;
@@ -34,18 +36,43 @@ public partial class PropHuntPlugin : BasePlugin
     public static PropHuntPlugin Instance;
 
     public override void Load()
-    {        
+    {
+        ReactorCredits.Register("Prop Hunt", "v2026.8.20", false, ReactorCredits.AlwaysShow);
+
         Instance = PluginSingleton<PropHuntPlugin>.Instance;
 
         IsPropHunt = Config.Bind("Prop Hunt", "Prop Hunt", false);
         MissTimePenalty = Config.Bind("Prop Hunt", "Miss Penalty", 10f);
-        Infection = Config.Bind("Prop Hunt", "Infection", false);
+        DisguiseRange = Config.Bind("Prop Hunt", "Disguise Range", 1.5f);
+        DisguiseCooldown = Config.Bind("Prop Hunt", "Disguise Cooldown", 5f);
+
+        // Restore the persisted settings into the gameplay statics
+        isPropHunt = IsPropHunt.Value;
+        missTimePenalty = MissTimePenalty.Value;
+        disguiseRange = DisguiseRange.Value;
+        disguiseCooldown = DisguiseCooldown.Value;
 
         PropHuntPreset.SetupPreset();
-        PropHuntSettings.SetupCustomSettings();
+        PropHuntOptions.Initialize();
 
-        Harmony.PatchAll(typeof(Patches));
-        Harmony.PatchAll(typeof(PropHuntPreset));
-        Harmony.PatchAll(typeof(PropHuntSettings));
+        Harmony.PatchAll();
     }
+
+	[HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
+	public static class HudUpdatePatch
+	{
+		public static void Postfix()
+		{
+			CustomButton.HudUpdate();
+		}
+	}
+
+	[HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Close))]
+	public static class MeetingClosePatch
+	{
+		public static void Postfix()
+		{
+			CustomButton.MeetingEndedUpdate();
+		}
+	}
 }
