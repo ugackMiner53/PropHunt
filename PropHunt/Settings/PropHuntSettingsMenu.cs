@@ -8,21 +8,8 @@ namespace PropHunt.Settings
     [HarmonyPatch]
     public static class PropHuntSettingsMenu
     {
-        private const int MaskLayer = 20;
-        private const float OptionX = 0.952f;
-        private const float OptionSpacing = 0.45f;
-        private const float HeaderX = -0.903f;
-        private const float HeaderScale = 0.63f;
-        private const float HeaderSpacing = 0.63f;
         private const string HeaderName = "PropHuntHeader";
         private const string OptionNamePrefix = "PropHuntOption";
-
-        private const int ViewMaskLayer = 61;
-        private const float ViewHeaderStartX = -9.77f;
-        private const float ViewHeaderSpacing = 1.05f;
-        private const float ViewRowSpacing = 0.85f;
-        private const float ViewLeftX = -8.95f;
-        private const float ViewRightX = -3f;
         private const string ViewHeaderName = "PropHuntViewHeader";
         private const string ViewPanelNamePrefix = "PropHuntViewPanel";
 
@@ -33,7 +20,7 @@ namespace PropHunt.Settings
         private static void GameOptionsMenuOnEnable(GameOptionsMenu __instance)
         {
             if (!PropHuntOptions.IsHideNSeek()) return;
-            // CreateSettings (called inside OnEnable) already appended our rows.
+            // CreateSettings (called from OnEnable) already appended our rows.
             if (HasAppendedOptions(__instance.settingsContainer)) return;
             AppendOptions(__instance);
         }
@@ -55,11 +42,11 @@ namespace PropHunt.Settings
                 if (container == null || scrollBar == null) return;
                 if (menu.stringOptionOrigin == null) return;
 
-                // Remove any previously appended PropHunt rows so we can re-place
-                // them correctly after a vanilla rebuild (option count can change).
+                // Wipe our own rows so a vanilla rebuild (which can change the
+                // option count) re-places them cleanly.
                 ClearAppendedChildren(container);
 
-                // Bottom-most vanilla child = where our section starts below it.
+                // Bottom-most vanilla child = where our section begins below it.
                 float bottomY = 0.713f;
                 bool found = false;
                 for (int i = 0; i < container.childCount; i++)
@@ -72,18 +59,18 @@ namespace PropHunt.Settings
                 if (!found) return;
                 float startY = bottomY;
 
-                float y = startY - HeaderSpacing;
+                float y = startY - 0.63f;
 
                 // "Prop Hunt" category header
                 if (menu.categoryHeaderOrigin != null)
                 {
                     CategoryHeaderMasked header = Object.Instantiate(menu.categoryHeaderOrigin, Vector3.zero, Quaternion.identity, container);
                     header.gameObject.name = HeaderName;
-                    header.transform.localScale = Vector3.one * HeaderScale;
-                    header.transform.localPosition = new Vector3(HeaderX, y, -2f);
-                    header.SetHeader(StringNames.GameMapName, MaskLayer);
+                    header.transform.localScale = Vector3.one * 0.63f;
+                    header.transform.localPosition = new Vector3(-0.903f, y, -2f);
+                    header.SetHeader(StringNames.GameMapName, 20);
                     if (header.Title != null) header.Title.text = "Prop Hunt";
-                    y -= HeaderSpacing;
+                    y -= 0.63f;
                 }
 
                 // Custom option rows
@@ -92,7 +79,7 @@ namespace PropHunt.Settings
                     PropHuntOption classOption = PropHuntOptions.AllOption[i];
                     StringOption option = Object.Instantiate(menu.stringOptionOrigin, Vector3.zero, Quaternion.identity, container);
                     option.gameObject.name = OptionNamePrefix + classOption.Id;
-                    option.transform.localPosition = new Vector3(OptionX, y, -2f);
+                    option.transform.localPosition = new Vector3(0.952f, y, -2f);
                     option.SetClickMask(menu.ButtonClickMask);
                     ApplyMask(option);
                     option.Values = new StringNames[classOption.AllValues.Length];
@@ -111,11 +98,10 @@ namespace PropHunt.Settings
                     }
 
                     if (AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost) option.SetAsPlayer();
-                    y -= OptionSpacing;
+                    y -= 0.45f;
                 }
 
-                // Extend the scroll bounds by the appended height so nothing is cut off.
-                float appendedHeight = (startY - y) + OptionSpacing;
+                float appendedHeight = (startY - y) + 0.15f;
                 scrollBar.SetYBoundsMax(scrollBar.ContentYBounds.max + appendedHeight);
             }
             catch (System.Exception e)
@@ -157,13 +143,13 @@ namespace PropHunt.Settings
             SpriteRenderer[] sprites = option.GetComponentsInChildren<SpriteRenderer>(true);
             for (int i = 0; i < sprites.Length; i++)
             {
-                sprites[i].material.SetInt(PlayerMaterial.MaskLayer, MaskLayer);
+                sprites[i].material.SetInt(PlayerMaterial.MaskLayer, 20);
             }
             TextMeshPro[] texts = option.GetComponentsInChildren<TextMeshPro>(true);
             for (int i = 0; i < texts.Length; i++)
             {
                 texts[i].fontMaterial.SetFloat("_StencilComp", 3f);
-                texts[i].fontMaterial.SetFloat("_Stencil", MaskLayer);
+                texts[i].fontMaterial.SetFloat("_Stencil", 20);
             }
         }
 
@@ -217,14 +203,13 @@ namespace PropHunt.Settings
                 if (container == null) return;
                 if (pane.infoPanelOrigin == null) return;
 
-                // Only append on the normal settings tab, never the Roles tab
-                // (roles panels are built from a different origin).
+                // Only the normal settings tab; the Roles tab builds from a
+                // different origin and must not be touched.
                 for (int i = 0; i < container.childCount; i++)
                 {
                     if (container.GetChild(i).GetComponent<CategoryHeaderRoleVariant>() != null) return;
                 }
 
-                // Remove any previously appended PropHunt view content.
                 ClearViewChildren(pane, container);
 
                 float bottomY = 1.44f;
@@ -238,7 +223,7 @@ namespace PropHunt.Settings
                 }
                 if (!found) return;
 
-                float y = bottomY - ViewRowSpacing;
+                float y = bottomY - 0.85f;
 
                 // Header
                 if (pane.categoryHeaderOrigin != null)
@@ -247,14 +232,14 @@ namespace PropHunt.Settings
                     header.gameObject.name = ViewHeaderName;
                     header.transform.SetParent(container, false);
                     header.transform.localScale = Vector3.one;
-                    header.transform.localPosition = new Vector3(ViewHeaderStartX, y, -2f);
-                    header.SetHeader(StringNames.GameMapName, ViewMaskLayer);
+                    header.transform.localPosition = new Vector3(-9.77f, y, -2f);
+                    header.SetHeader(StringNames.GameMapName, 61);
                     if (header.Title != null) header.Title.text = "Prop Hunt";
                     if (pane.settingsInfo != null) pane.settingsInfo.Add(header.gameObject);
-                    y -= ViewHeaderSpacing;
+                    y -= 1.05f;
                 }
 
-                // Two-column panels (like the vanilla layout)
+                // Two-column panels, matching the vanilla layout
                 for (int i = 0; i < PropHuntOptions.AllOption.Count; i++)
                 {
                     PropHuntOption classOption = PropHuntOptions.AllOption[i];
@@ -265,23 +250,23 @@ namespace PropHunt.Settings
                     float x;
                     if (i % 2 == 0)
                     {
-                        x = ViewLeftX;
-                        if (i > 0) y -= ViewRowSpacing;
+                        x = -8.95f;
+                        if (i > 0) y -= 0.85f;
                     }
                     else
                     {
-                        x = ViewRightX;
+                        x = -3f;
                     }
                     panel.transform.localPosition = new Vector3(x, y, -2f);
-                    panel.SetInfo((StringNames)0, classOption.AllValues[classOption.Value] + classOption.Suffix, ViewMaskLayer);
+                    panel.SetInfo((StringNames)0, classOption.AllValues[classOption.Value] + classOption.Suffix, 61);
                     if (panel.titleText != null) panel.titleText.text = classOption.Name;
                     if (pane.settingsInfo != null) pane.settingsInfo.Add(panel.gameObject);
                 }
-                y -= ViewRowSpacing;
+                y -= 0.85f;
 
                 if (pane.scrollBar != null && pane.settingsInfo != null)
                 {
-                    pane.scrollBar.CalculateAndSetYBounds((float)(pane.settingsInfo.Count + 10), 2f, 6f, ViewRowSpacing);
+                    pane.scrollBar.CalculateAndSetYBounds((float)(pane.settingsInfo.Count + 10), 2f, 6f, 0.85f);
                 }
             }
             catch (System.Exception e)
@@ -317,8 +302,8 @@ namespace PropHunt.Settings
         [HarmonyPrefix]
         private static bool StringOptionStart(StringOption __instance)
         {
-            // Our options have no BaseGameSetting data, so skip the vanilla
-            // Initialize for them (it would read a null option data).
+            // Our rows carry no BaseGameSetting, so skip vanilla Initialize
+            // (it would dereference a null option data).
             return FindClassOption(__instance) == null;
         }
 
@@ -326,7 +311,6 @@ namespace PropHunt.Settings
         [HarmonyPrefix]
         private static bool StringOptionFixedUpdate(StringOption __instance)
         {
-            // Skip the vanilla text refresh for our options (we set it manually).
             return FindClassOption(__instance) == null;
         }
 

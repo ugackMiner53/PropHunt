@@ -10,23 +10,22 @@ namespace PropHunt;
 
 public static class Utility
 {
-    public static GameObject FindClosestConsole(GameObject origin, float radius)
+    public static Console FindClosestConsole(GameObject origin, float radius)
     {
-        Collider2D bestCollider = null;
+        if (ShipStatus.Instance == null) return null;
+        Console bestConsole = null;
         float bestDist = 9999;
-        foreach (Collider2D collider in Physics2D.OverlapCircleAll(origin.transform.position, radius))
+        foreach (Console console in ShipStatus.Instance.AllConsoles)
         {
-            if (collider.GetComponent<Console>() != null)
+            if (console == null) continue;
+            float dist = Vector2.Distance(origin.transform.position, console.transform.position);
+            if (dist <= radius && dist < bestDist)
             {
-                float dist = Vector2.Distance(origin.transform.position, collider.transform.position);
-                if (dist < bestDist)
-                {
-                    bestCollider = collider;
-                    bestDist = dist;
-                }
+                bestConsole = console;
+                bestDist = dist;
             }
         }
-        return bestCollider ? bestCollider.gameObject : null;
+        return bestConsole;
     }
 
     public static System.Collections.IEnumerator KillConsoleAnimation()

@@ -26,12 +26,12 @@ namespace PropHunt
                 () =>
                 {
                     if (!PropHuntPlugin.isPropHunt || PlayerControl.LocalPlayer.Data.Role.IsImpostor) return;
-                    GameObject closest = Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, PropHuntPlugin.disguiseRange);
+                    Console closest = Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, PropHuntPlugin.disguiseRange);
                     if (closest != null)
                     {
                         for (int i = 0; i < ShipStatus.Instance.AllConsoles.Length; i++)
                         {
-                            if (ShipStatus.Instance.AllConsoles[i] == closest.GetComponent<Console>())
+                            if (ShipStatus.Instance.AllConsoles[i] == closest)
                             {
                                 Logger<PropHuntPlugin>.Info("Task of index " + i + " being sent out");
                                 RPCHandler.RPCPropSync(PlayerControl.LocalPlayer, i + "");
@@ -52,7 +52,7 @@ namespace PropHunt
                     if (!PropHuntPlugin.isPropHunt || PlayerControl.LocalPlayer.Data.Role.IsImpostor
                         || AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
                         return false;
-                    GameObject target = Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, PropHuntPlugin.disguiseRange);
+                    Console target = Utility.FindClosestConsole(PlayerControl.LocalPlayer.gameObject, PropHuntPlugin.disguiseRange);
                     if (target != null)
                     {
                         Sprite s = target.GetComponent<SpriteRenderer>()?.sprite
