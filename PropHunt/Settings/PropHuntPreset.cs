@@ -155,14 +155,14 @@ namespace PropHunt.Settings
                     v11.SeekerPings = false;
                     v11.SeekerFinalMap = false;
                     v11.FinalCountdownTime = 30f;
-                    v11.EscapeTime = PropHuntPlugin.seekerWaitTime;
+                    v11.EscapeTime = 240f;
                     v11.ImpostorLightMod = 1;
                 }
-                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, true, PropHuntPlugin.missTimePenalty, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown, PropHuntPlugin.seekerWaitTime);
+                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, true, PropHuntPlugin.missTimePenalty, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown, PropHuntPlugin.seekerWaitTime, PropHuntPlugin.infectionMode);
             }
             else
             {
-                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, false, PropHuntPlugin.missTimePenalty, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown, PropHuntPlugin.seekerWaitTime);
+                RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, false, PropHuntPlugin.missTimePenalty, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown, PropHuntPlugin.seekerWaitTime, PropHuntPlugin.infectionMode);
             }
         }
 

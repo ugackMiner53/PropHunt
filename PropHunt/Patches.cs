@@ -1,4 +1,6 @@
+using AmongUs.GameOptions;
 using HarmonyLib;
+using PowerTools;
 using Reactor.Utilities;
 using Reactor.Utilities.Extensions;
 using UnityEngine;
@@ -89,7 +91,7 @@ namespace PropHunt
                 {
                     if (!PropHuntPlugin.isPropHunt || PlayerControl.LocalPlayer.Data.Role.IsImpostor) return;
                     PlayerControl player = PlayerControl.LocalPlayer;
-                    if (PropManager.playerToProp.ContainsKey(player) && PropManager.playerToProp[player].sprite != null)
+                    if (TryGetAliveProp(player, out SpriteRenderer revertProp) && revertProp.sprite != null)
                     {
                         Logger<PropHuntPlugin>.Info("Reverting to crewmate");
                         RPCHandler.RPCRevert(player);
@@ -113,8 +115,7 @@ namespace PropHunt
                 () => PropHuntPlugin.isPropHunt
                        && !PlayerControl.LocalPlayer.Data.Role.IsImpostor
                        && !PlayerControl.LocalPlayer.Data.IsDead
-                       && PropManager.playerToProp.ContainsKey(PlayerControl.LocalPlayer)
-                       && PropManager.playerToProp[PlayerControl.LocalPlayer].sprite != null
+                       && TryGetAliveProp(PlayerControl.LocalPlayer, out SpriteRenderer revertProp) && revertProp.sprite != null
                        && AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started,
                 () => true,
                 () => { },
@@ -153,8 +154,7 @@ namespace PropHunt
                 () => PropHuntPlugin.isPropHunt
                        && !PlayerControl.LocalPlayer.Data.Role.IsImpostor
                        && !PlayerControl.LocalPlayer.Data.IsDead
-                       && PropManager.playerToProp.ContainsKey(PlayerControl.LocalPlayer)
-                       && PropManager.playerToProp[PlayerControl.LocalPlayer].sprite != null
+                       && TryGetAliveProp(PlayerControl.LocalPlayer, out SpriteRenderer moveCheckProp) && moveCheckProp.sprite != null
                        && AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started,
                 () => true,
                 () =>
@@ -187,11 +187,11 @@ namespace PropHunt
         public static void MovePropPatch(PlayerPhysics __instance)
         {
             if (!PropHuntPlugin.isPropHunt || !__instance.AmOwner) return;
-            if (!isMovingProp || !PropManager.playerToProp.ContainsKey(__instance.myPlayer)) return;
+            if (!isMovingProp || !TryGetAliveProp(__instance.myPlayer, out SpriteRenderer movePropRenderer)) return;
 
             Vector2 input = DestroyableSingleton<HudManager>.Instance.joystick.DeltaL;
 
-            Transform prop = PropManager.playerToProp[__instance.myPlayer].transform;
+            Transform prop = movePropRenderer.transform;
             Vector3 newPosition = new Vector3(
                 prop.localPosition.x + input.x * PropHuntPlugin.propMoveSpeed * Time.fixedDeltaTime,
                 prop.localPosition.y + input.y * PropHuntPlugin.propMoveSpeed * Time.fixedDeltaTime,
@@ -227,14 +227,6 @@ namespace PropHunt
             isMovingProp = false;
         }
 
-        [HarmonyPatch(typeof(LogicOptionsHnS), nameof(LogicOptionsHnS.GetEscapeTime))]
-        [HarmonyPostfix]
-        public static void SeekerWaitTimePatch(ref float __result)
-        {
-            if (!PropHuntPlugin.isPropHunt) return;
-            __result = PropHuntPlugin.seekerWaitTime;
-        }
-
         [HarmonyPatch(typeof(LogicOptionsHnS), nameof(LogicOptionsHnS.GetCrewmateLeadTime))]
         [HarmonyPostfix]
         public static void CrewmateLeadTimePatch(ref int __result)
@@ -243,17 +235,25 @@ namespace PropHunt
             __result = (int)PropHuntPlugin.seekerWaitTime;
         }
 
-        [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.ResetAnimState))]
-        [HarmonyPostfix]
-        public static void PlayerPhysicsResetAnimationPatch(PlayerPhysics __instance)
+        [HarmonyPatch(typeof(PlayerControl), "set_Visible")]
+        [HarmonyPrefix]
+        public static void PlayerVisibleGuardPatch(PlayerControl __instance, ref bool value)
         {
-            if (!AmongUsClient.Instance.IsGameStarted || !PropHuntPlugin.isPropHunt || __instance.myPlayer == null)
-                return;
+            if (!value || !PropHuntPlugin.isPropHunt) return;
+            if (!TryGetAliveProp(__instance, out SpriteRenderer guardProp) || guardProp.sprite == null) return;
+            if (__instance.Data == null || __instance.Data.Role == null) return;
+            if (__instance.Data.Role.IsImpostor || __instance.Data.IsDead) return;
+            value = false;
+        }
 
-            if (__instance.myPlayer.Visible && !__instance.myPlayer.Data.Role.IsImpostor && !__instance.myPlayer.Data.IsDead && PropManager.playerToProp.ContainsKey(__instance.myPlayer) && PropManager.playerToProp[__instance.myPlayer].sprite != null)
-            {
-                __instance.myPlayer.Visible = false;
-            }
+        [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.FixedUpdate))]
+        [HarmonyPostfix]
+        public static void PropVentVisibilityPatch(PlayerPhysics __instance)
+        {
+            if (!PropHuntPlugin.isPropHunt || __instance.myPlayer == null) return;
+            if (!TryGetAliveProp(__instance.myPlayer, out SpriteRenderer ventProp) || ventProp.sprite == null) return;
+            bool shouldShow = !__instance.myPlayer.inVent;
+            if (ventProp.enabled != shouldShow) ventProp.enabled = shouldShow;
         }
 
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.Die))]
@@ -262,10 +262,12 @@ namespace PropHunt
         {
             if (!PropHuntPlugin.isPropHunt || __instance.Data.Role.IsImpostor) return;
 
-            SpriteRenderer prop = PropManager.playerToProp[__instance];
-            if (prop != null)
+            if (PropManager.playerToProp.TryGetValue(__instance, out SpriteRenderer prop))
             {
-                prop.gameObject.Destroy();
+                if (prop != null)
+                {
+                    prop.gameObject.Destroy();
+                }
                 PropManager.playerToProp.Remove(__instance);
             }
             if (__instance == PlayerControl.LocalPlayer)
@@ -278,6 +280,57 @@ namespace PropHunt
                     movePropButton.isEffectActive = false;
                 }
             }
+
+            if (PropHuntPlugin.infectionMode)
+            {
+                DestroyableSingleton<RoleManager>.Instance.SetRole(__instance, RoleTypes.Impostor);
+                __instance.Data.Role.TeamType = RoleTeamTypes.Impostor;
+                __instance.Visible = true;
+                __instance.cosmetics.SetPetVisible(true);
+
+                foreach (DeadBody body in Object.FindObjectsOfType<DeadBody>())
+                {
+                    if (body.ParentId == __instance.PlayerId)
+                    {
+                        body.gameObject.SetActive(false);
+                        break;
+                    }
+                }
+
+                if (__instance.AmOwner)
+                {
+                    DestroyableSingleton<HudManager>.Instance.ShadowQuad.material.color = new Color(0f, 0f, 0f, 1f);
+                }
+            }
+        }
+
+        private static bool IsInfectionVictim(PlayerControl player)
+        {
+            return PropHuntPlugin.isPropHunt && PropHuntPlugin.infectionMode
+                && player != null && player.Data != null && !player.Data.Role.IsImpostor;
+        }
+
+        [HarmonyPatch(typeof(RoleManager), nameof(RoleManager.AssignRoleOnDeath))]
+        [HarmonyPrefix]
+        public static bool AssignRoleOnDeathPatch(PlayerControl player, bool specialRolesAllowed)
+        {
+            return !IsInfectionVictim(player);
+        }
+
+        [HarmonyPatch(typeof(HideAndSeekManager), nameof(HideAndSeekManager.OnPlayerDeath))]
+        [HarmonyPrefix]
+        public static bool HideAndSeekOnPlayerDeathPatch(PlayerControl player, bool assignGhostRole)
+        {
+            return !IsInfectionVictim(player);
+        }
+
+        [HarmonyPatch(typeof(SpriteAnim), nameof(SpriteAnim.Play))]
+        [HarmonyPrefix]
+        public static void SpriteAnimPlayPatch(AnimationClip anim, ref float speed)
+        {
+            if (!PropHuntPlugin.isPropHunt || anim == null || !anim.name.StartsWith("HnSSeekerSpawn")) return;
+            speed = anim.length / Mathf.Max(1f, PropHuntPlugin.seekerWaitTime);
+            Logger<PropHuntPlugin>.Info("Intro seek anim " + anim.name + ": " + anim.length.ToString("0.00") + "s -> speed " + speed.ToString("0.00"));
         }
 
         [HarmonyPatch(typeof(LogicGameFlowHnS), nameof(LogicGameFlowHnS.SeekerAdminMapEnabled))]
@@ -384,6 +437,11 @@ namespace PropHunt
                 shadowCollab.ShadowQuad.gameObject.SetActive(true);
                 shadowCollab.ShadowQuad.material.color = new Color(0.2745f, 0.2745f, 0.2745f, 1);
             }
+        }
+
+        private static bool TryGetAliveProp(PlayerControl player, out SpriteRenderer renderer)
+        {
+            return PropManager.playerToProp.TryGetValue(player, out renderer) && renderer != null;
         }
     }
 }

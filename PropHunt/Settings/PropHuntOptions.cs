@@ -15,6 +15,7 @@ namespace PropHunt.Settings
         public const byte DisguiseRangeId = 2;
         public const byte DisguiseCooldownId = 3;
         public const byte SeekerWaitTimeId = 4;
+        public const byte InfectionModeId = 5;
 
         private const string SaveFileName = "PropHunt-HostSettings";
 
@@ -37,6 +38,7 @@ namespace PropHunt.Settings
             float range = plugin?.DisguiseRange.Value ?? 1.5f;
             float cooldown = plugin?.DisguiseCooldown.Value ?? 5f;
             float seekerWait = plugin?.SeekerWaitTime.Value ?? 10f;
+            bool infection = plugin?.InfectionMode.Value ?? false;
 
             string[] penaltyValues = new[] { "0", "5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60" };
             int penaltyIndex = Array.IndexOf(penaltyValues, missPenalty.ToString("0"));
@@ -93,6 +95,13 @@ namespace PropHunt.Settings
                     AllValues = seekerWaitValues,
                     Value = (byte)seekerWaitIndex,
                     Suffix = "s"
+                },
+                new PropHuntOption
+                {
+                    Id = InfectionModeId,
+                    Name = "Infection Mode",
+                    AllValues = new[] { "Off", "On" },
+                    Value = (byte)(infection ? 1 : 0)
                 }
             };
         }
@@ -114,18 +123,21 @@ namespace PropHunt.Settings
             PropHuntOption range = Find(DisguiseRangeId);
             PropHuntOption cooldown = Find(DisguiseCooldownId);
             PropHuntOption seekerWait = Find(SeekerWaitTimeId);
+            PropHuntOption infection = Find(InfectionModeId);
 
             PropHuntPlugin.isPropHunt = propHunt != null && propHunt.Value == 1;
             PropHuntPlugin.missTimePenalty = penalty != null && float.TryParse(penalty.AllValues[penalty.Value], out float v) ? v : 10f;
             PropHuntPlugin.disguiseRange = range != null && float.TryParse(range.AllValues[range.Value], out float r) ? r : 1.5f;
             PropHuntPlugin.disguiseCooldown = cooldown != null && float.TryParse(cooldown.AllValues[cooldown.Value], out float c) ? c : 5f;
             PropHuntPlugin.seekerWaitTime = seekerWait != null && float.TryParse(seekerWait.AllValues[seekerWait.Value], out float s) ? s : 10f;
+            PropHuntPlugin.infectionMode = infection != null && infection.Value == 1;
 
             PropHuntPlugin.Instance.IsPropHunt.Value = PropHuntPlugin.isPropHunt;
             PropHuntPlugin.Instance.MissTimePenalty.Value = PropHuntPlugin.missTimePenalty;
             PropHuntPlugin.Instance.DisguiseRange.Value = PropHuntPlugin.disguiseRange;
             PropHuntPlugin.Instance.DisguiseCooldown.Value = PropHuntPlugin.disguiseCooldown;
             PropHuntPlugin.Instance.SeekerWaitTime.Value = PropHuntPlugin.seekerWaitTime;
+            PropHuntPlugin.Instance.InfectionMode.Value = PropHuntPlugin.infectionMode;
             PropHuntPlugin.Instance.Config.Save();
         }
 
@@ -138,6 +150,7 @@ namespace PropHunt.Settings
             PropHuntOption range = Find(DisguiseRangeId);
             PropHuntOption cooldown = Find(DisguiseCooldownId);
             PropHuntOption seekerWait = Find(SeekerWaitTimeId);
+            PropHuntOption infection = Find(InfectionModeId);
 
             if (propHunt != null) propHunt.Value = (byte)(PropHuntPlugin.isPropHunt ? 1 : 0);
             if (penalty != null)
@@ -160,6 +173,10 @@ namespace PropHunt.Settings
                 int index = Array.IndexOf(seekerWait.AllValues, PropHuntPlugin.seekerWaitTime.ToString("0"));
                 seekerWait.Value = (byte)Math.Max(0, index);
             }
+            if (infection != null)
+            {
+                infection.Value = (byte)(PropHuntPlugin.infectionMode ? 1 : 0);
+            }
         }
 
         /// <summary>Host: broadcasts the full current state to all clients.</summary>
@@ -167,7 +184,7 @@ namespace PropHunt.Settings
         {
             if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
             if (PlayerControl.LocalPlayer == null) return;
-            RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, PropHuntPlugin.isPropHunt, PropHuntPlugin.missTimePenalty, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown, PropHuntPlugin.seekerWaitTime);
+            RPCHandler.RPCSettingSync(PlayerControl.LocalPlayer, PropHuntPlugin.isPropHunt, PropHuntPlugin.missTimePenalty, PropHuntPlugin.disguiseRange, PropHuntPlugin.disguiseCooldown, PropHuntPlugin.seekerWaitTime, PropHuntPlugin.infectionMode);
         }
 
         /// <summary>Host: applies a menu change, persists it, pushes it to everyone.</summary>

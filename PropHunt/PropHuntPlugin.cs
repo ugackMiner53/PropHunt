@@ -23,6 +23,7 @@ public partial class PropHuntPlugin : BasePlugin
     public ConfigEntry<float> DisguiseRange { get; private set; }
     public ConfigEntry<float> DisguiseCooldown { get; private set; }
     public ConfigEntry<float> SeekerWaitTime { get; private set; }
+    public ConfigEntry<bool> InfectionMode { get; private set; }
 
     // Gameplay Variables
     public static bool isPropHunt = true;
@@ -30,6 +31,7 @@ public partial class PropHuntPlugin : BasePlugin
     public static float disguiseRange = 1.5f;
     public static float disguiseCooldown = 5f;
     public static float seekerWaitTime = 10f;
+    public static bool infectionMode = false;
 
     // Constants
     public const float propMoveSpeed = 0.5f;
@@ -48,6 +50,7 @@ public partial class PropHuntPlugin : BasePlugin
         DisguiseRange = Config.Bind("Prop Hunt", "Disguise Range", 1.5f);
         DisguiseCooldown = Config.Bind("Prop Hunt", "Disguise Cooldown", 5f);
         SeekerWaitTime = Config.Bind("Prop Hunt", "Seeker Wait Time", 10f);
+        InfectionMode = Config.Bind("Prop Hunt", "Infection Mode", false);
 
         // Restore the persisted settings into the gameplay statics
         isPropHunt = IsPropHunt.Value;
@@ -55,6 +58,7 @@ public partial class PropHuntPlugin : BasePlugin
         disguiseRange = DisguiseRange.Value;
         disguiseCooldown = DisguiseCooldown.Value;
         seekerWaitTime = SeekerWaitTime.Value;
+        infectionMode = InfectionMode.Value;
 
         PropHuntPreset.SetupPreset();
         PropHuntOptions.Initialize();
