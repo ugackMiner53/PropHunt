@@ -5,7 +5,7 @@
         <DebugType>embedded</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <VersionPrefix>2026.8.20</VersionPrefix>
+        <VersionPrefix>2026.9.27</VersionPrefix>
         <VersionSuffix>dev</VersionSuffix>
         <Description>Prop Hunt Mod</Description>
         <Authors>ugackMiner</Authors>

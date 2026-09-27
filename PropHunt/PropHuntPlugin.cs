@@ -11,7 +11,7 @@ using Reactor.Utilities;
 
 namespace PropHunt;
 
-[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2026.8.20")]
+[BepInPlugin("com.ugackminer.amongus.prophunt", "Prop Hunt", "v2026.9.27")]
 [BepInProcess("Among Us.exe")]
 [BepInDependency(ReactorPlugin.Id)]
 public partial class PropHuntPlugin : BasePlugin
