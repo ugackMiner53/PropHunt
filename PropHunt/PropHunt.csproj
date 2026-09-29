@@ -5,14 +5,14 @@
         <DebugType>embedded</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <VersionPrefix>2026.9.27</VersionPrefix>
+        <VersionPrefix>2026.9.29</VersionPrefix>
         <VersionSuffix>dev</VersionSuffix>
         <Description>Prop Hunt Mod</Description>
-        <Authors>ugackMiner</Authors>
+        <Authors>FangkuaiYa, ugackMiner</Authors>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Reactor" Version="2.5.0-ci.371" />
+        <PackageReference Include="Reactor" Version="2.5.1-ci.400" />
         <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.735" Private="false" ExcludeAssets="runtime;native" />
         <PackageReference Include="AmongUs.GameLibs.Steam" Version="2026.8.18" PrivateAssets="all" />
         <PackageReference Include="BepInEx.IL2CPP.MSBuild" Version="2.1.0-rc.1" PrivateAssets="all" ExcludeAssets="runtime">
@@ -25,7 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Deobfuscate Include="../.references/Assembly-CSharp-2026.2.24.dll" />
+        <Deobfuscate Include="../.references/Assembly-CSharp-2026.6.18.dll" />
 
         <!-- <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="0.3.0" /> -->
     </ItemGroup>
