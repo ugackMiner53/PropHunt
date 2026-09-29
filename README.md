@@ -25,6 +25,8 @@ Prop Hunt uses the same rules and basics as Hide and Seek. Simply create a Hide 
 |-----------|--------|--------|
 | Prop Hunt | If prop hunt is enabled | True |
 | Time Penalty | The amount of time subtracted from the timer on a missed kill | 10s |
+| Disguise Range | Allow changing the distance at which a player becomes a prop | 1.5 |
+| Seeker Wait Time | Run to change the waiting time for Seeker | 10s |
 | Infection Mode | Whether Props become Seekers when they are killed | False |
 
 ## Installation
@@ -33,7 +35,7 @@ Download the zip from the [latest release](https://github.com/ugackMiner53/PropH
 Although the mod *may* work on official servers, it is highly discouraged to do so, and will likely get you banned. Instead, try to setup your own modded server using [Impostor](https://github.com/Impostor/Impostor) or another Reactor compatible server.
 
 ## Compatability
-Prop Hunt is fully compatible with [Submerged](https://github.com/SubmergedAmongUs/Submerged)!
+Prop Hunt is fully compatible with [Submerged](https://github.com/SubmergedAmongUs/Submerged) and [LevelImposter](https://github.com/DigiWorm0/LevelImposter)!
 
 It is also designed to work well with other mods, but you may run into incompatibilities with certain tested mods. 
 File an [issue](https://github.com/ugackMiner53/PropHunt/issues) if you find any problems!
