@@ -2,7 +2,7 @@
 
 ![Prop Hunt Logo](./Images/prophuntlogo.png)
 
-```Compatible with v17.2.1 (v2026.2.24) ```
+```Compatible with v18.0 (v2026.8.18) ```
 # Prop Hunt
 
 A mod for [Among Us](https://store.steampowered.com/app/945360/Among_Us/) which extends Hide and Seek into a new mode, Prop Hunt!
@@ -25,8 +25,7 @@ Prop Hunt uses the same rules and basics as Hide and Seek. Simply create a Hide 
 |-----------|--------|--------|
 | Prop Hunt | If prop hunt is enabled | True |
 | Time Penalty | The amount of time subtracted from the timer on a missed kill | 10s |
-<!-- Infection mode is currently disabled because Hide and Seek relies a lot on there only being one impostor! -->
-<!-- | Infection Mode | Whether Props become Seekers when they are killed | True |  -->
+| Infection Mode | Whether Props become Seekers when they are killed | False |
 
 ## Installation
 Download the zip from the [latest release](https://github.com/ugackMiner53/PropHunt/releases), and extract the contents into your Among Us game folder.

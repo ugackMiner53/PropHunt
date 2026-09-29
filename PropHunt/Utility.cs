@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -9,23 +10,22 @@ namespace PropHunt;
 
 public static class Utility
 {
-    public static GameObject FindClosestConsole(GameObject origin, float radius)
+    public static Console FindClosestConsole(GameObject origin, float radius)
     {
-        Collider2D bestCollider = null;
+        if (ShipStatus.Instance == null) return null;
+        Console bestConsole = null;
         float bestDist = 9999;
-        foreach (Collider2D collider in Physics2D.OverlapCircleAll(origin.transform.position, radius))
+        foreach (Console console in ShipStatus.Instance.AllConsoles)
         {
-            if (collider.GetComponent<Console>() != null)
+            if (console == null) continue;
+            float dist = Vector2.Distance(origin.transform.position, console.transform.position);
+            if (dist <= radius && dist < bestDist)
             {
-                float dist = Vector2.Distance(origin.transform.position, collider.transform.position);
-                if (dist < bestDist)
-                {
-                    bestCollider = collider;
-                    bestDist = dist;
-                }
+                bestConsole = console;
+                bestDist = dist;
             }
         }
-        return bestCollider ? bestCollider.gameObject : null;
+        return bestConsole;
     }
 
     public static System.Collections.IEnumerator KillConsoleAnimation()
@@ -41,9 +41,10 @@ public static class Utility
         yield break;
     }
 
-    public static unsafe Texture2D LoadTextureFromPath(string path) 
+    public static unsafe Texture2D LoadTextureFromPath(string path)
     {
-        try {
+        try
+        {
             Texture2D texture = new(2, 2, TextureFormat.ARGB32, true);
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path);
             long length = stream.Length;
@@ -52,9 +53,29 @@ public static class Utility
             ImageConversion.LoadImage(texture, textureBytes, false);
             Logger<PropHuntPlugin>.Info("Correctly loaded " + path);
             return texture;
-        } catch {
+        }
+        catch
+        {
             Logger<PropHuntPlugin>.Error("Failed loading " + path);
         }
         return null;
+    }
+
+    public static readonly Dictionary<string, Sprite> _spriteCache = new();
+    public static Sprite LoadSprite(string path, float ppu)
+    {
+        if (_spriteCache.TryGetValue(path, out var c)) return c;
+        try
+        {
+            var s = Assembly.GetExecutingAssembly().GetManifestResourceStream(path);
+            if (s == null) return null;
+            var t = new Texture2D(0, 0, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            using var m = new System.IO.MemoryStream(); s.CopyTo(m);
+            t.LoadImage(m.ToArray(), false);
+            var sp = Sprite.Create(t, new Rect(0, 0, t.width, t.height), new Vector2(0.5f, 0.5f), ppu);
+            sp.hideFlags |= HideFlags.HideAndDontSave | HideFlags.DontSaveInEditor;
+            _spriteCache[path] = sp; return sp;
+        }
+        catch { return null; }
     }
 }
