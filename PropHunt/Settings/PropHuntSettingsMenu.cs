@@ -298,12 +298,10 @@ namespace PropHunt.Settings
 
         #region StringOption (custom row behavior)
 
-        [HarmonyPatch(typeof(StringOption), nameof(StringOption.Start))]
+        [HarmonyPatch(typeof(StringOption), nameof(StringOption.Initialize))]
         [HarmonyPrefix]
-        private static bool StringOptionStart(StringOption __instance)
+        private static bool StringOptionInitialize(StringOption __instance)
         {
-            // Our rows carry no BaseGameSetting, so skip vanilla Initialize
-            // (it would dereference a null option data).
             return FindClassOption(__instance) == null;
         }
 
