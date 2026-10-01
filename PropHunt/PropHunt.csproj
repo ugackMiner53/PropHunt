@@ -5,7 +5,7 @@
         <DebugType>embedded</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <VersionPrefix>2026.9.29</VersionPrefix>
+        <VersionPrefix>2026.10.1</VersionPrefix>
         <VersionSuffix>dev</VersionSuffix>
         <Description>Prop Hunt Mod</Description>
         <Authors>FangkuaiYa, ugackMiner</Authors>
@@ -25,7 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Deobfuscate Include="../.references/Assembly-CSharp-2026.6.18.dll" />
+        <Deobfuscate Include="../.references/Assembly-CSharp-2026.9.29.dll" />
 
         <!-- <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="0.3.0" /> -->
     </ItemGroup>
