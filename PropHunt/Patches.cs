@@ -195,7 +195,7 @@ namespace PropHunt
             Vector3 newPosition = new Vector3(
                 prop.localPosition.x + input.x * PropHuntPlugin.propMoveSpeed * Time.fixedDeltaTime,
                 prop.localPosition.y + input.y * PropHuntPlugin.propMoveSpeed * Time.fixedDeltaTime,
-                -3);
+                0);
 
             if (Vector2.Distance(Vector2.zero, newPosition) < PropHuntPlugin.maxPropDistance)
             {
@@ -208,14 +208,20 @@ namespace PropHunt
         [HarmonyPostfix]
         public static void PlayerControlStartPatch(PlayerControl __instance)
         {
+            // layer = 8 (Players): layer 11 (Objects) is inside the ShadowCamera's
+            // culling mask (layers 9-12), so a prop on layer 11 got baked into the
+            // shadow texture and punched a hole in it — in other players' views the
+            // prop then appeared on top of shadowed areas instead of being covered.
             GameObject propObj = new GameObject("Prop")
             {
-                layer = 11
+                layer = 8
             };
             SpriteRenderer propRenderer = propObj.AddComponent<SpriteRenderer>();
             propObj.transform.SetParent(__instance.transform);
             propObj.transform.localScale = Vector2.one;
-            propObj.transform.localPosition = new Vector3(0, 0, -3);
+            // z = 0 puts the prop exactly on the vanilla player body plane, so every
+            // shadow/occluder that covers a real player covers the prop too.
+            propObj.transform.localPosition = new Vector3(0, 0, 0);
             PropManager.playerToProp.Add(__instance, propRenderer);
         }
 
@@ -407,11 +413,9 @@ namespace PropHunt
             ShadowCollab shadowCollab = Object.FindObjectOfType<ShadowCollab>();
             if (PropHuntPlugin.isPropHunt)
             {
-                foreach (NetworkedPlayerInfo player in GameData.Instance.AllPlayers)
-                {
-                    player.Object.transform.FindChild("BodyForms").localPosition = new Vector3(0, 0, -5);
-                    player.Object.transform.FindChild("Cosmetics").localPosition = new Vector3(0, 0, -5);
-                }
+                // NOTE: BodyForms/Cosmetics must stay at their vanilla local z (0).
+                // Moving them forward (-5) pushed the player above the map's shadow
+                // sprites, so they were no longer covered by the shadow texture.
 
                 if (PlayerControl.LocalPlayer.Data.Role.IsImpostor)
                 {
@@ -428,12 +432,6 @@ namespace PropHunt
             }
             else
             {
-                foreach (NetworkedPlayerInfo player in GameData.Instance.AllPlayers)
-                {
-                    player.Object.transform.FindChild("BodyForms").localPosition = new Vector3(0, 0, 0);
-                    player.Object.transform.FindChild("Cosmetics").localPosition = new Vector3(0, 0, 0);
-                }
-
                 shadowCollab.ShadowQuad.gameObject.SetActive(true);
                 shadowCollab.ShadowQuad.material.color = new Color(0.2745f, 0.2745f, 0.2745f, 1);
             }
