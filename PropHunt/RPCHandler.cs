@@ -12,7 +12,8 @@ public enum RPC
     PropPos,
     FailedKill,
     SettingSync,
-    Revert
+    Revert,
+    SeekerTransform
 }
 
 public static class RPCHandler
@@ -47,6 +48,16 @@ public static class RPCHandler
             player.Visible = true;
             player.cosmetics.SetPetVisible(true);
         }
+    }
+
+    // Sent by a client when one of its players gets converted in infection mode,
+    // so every other client replays the opening seeker transform (giant mouth).
+    [MethodRpc((uint)RPC.SeekerTransform)]
+    public static void RPCSeekerTransform(PlayerControl player)
+    {
+        Logger<PropHuntPlugin>.Info("RPCSeekerTransform received for player "
+            + (player != null ? player.PlayerId.ToString() : "null"));
+        Patches.ApplySeekerTransformVisual(player, false);
     }
 
     [MethodRpc((uint)RPC.FailedKill)]
